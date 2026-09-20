@@ -6,8 +6,10 @@ import { WorkRequest } from './pages/WorkRequest';
 import { Reviews } from './pages/Reviews';
 import { Agents } from './pages/Agents';
 import { EngineDashboard } from './pages/EngineDashboard';
+import { ExecutionDashboard } from './pages/ExecutionDashboard';
+import { DeliveryDashboard } from './pages/DeliveryDashboard';
 
-export type Page = 'command-center' | 'project' | 'work-request' | 'reviews' | 'agents' | 'engine';
+export type Page = 'command-center' | 'project' | 'work-request' | 'reviews' | 'agents' | 'engine' | 'execution' | 'delivery';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
@@ -27,6 +29,10 @@ export default function App() {
         return <Agents />;
       case 'engine':
         return <EngineDashboard />;
+      case 'execution':
+        return <ExecutionDashboard />;
+      case 'delivery':
+        return <DeliveryDashboard />;
       default:
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
     }
