@@ -7,7 +7,8 @@ import {
   Bot, 
   Activity,
   Shield,
-  Settings
+  Settings,
+  Cpu
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -17,6 +18,7 @@ interface SidebarProps {
 
 const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'command-center', label: 'Command Center', icon: <LayoutDashboard size={20} /> },
+  { id: 'engine', label: 'Engine', icon: <Cpu size={20} /> },
   { id: 'project', label: 'Projects', icon: <FolderKanban size={20} /> },
   { id: 'work-request', label: 'Work Requests', icon: <Plus size={20} /> },
   { id: 'reviews', label: 'Reviews', icon: <CheckSquare size={20} /> },
