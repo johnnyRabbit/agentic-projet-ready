@@ -12,7 +12,8 @@ import {
   Terminal,
   Rocket,
   HardDrive,
-  TrendingUp
+  TrendingUp,
+  Github
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'work-request', label: 'Work Requests', icon: <Plus size={20} /> },
   { id: 'reviews', label: 'Reviews', icon: <CheckSquare size={20} /> },
   { id: 'agents', label: 'Agents', icon: <Bot size={20} /> },
+  { id: 'github', label: 'GitHub', icon: <Github size={20} /> },
 ];
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {

@@ -1,27 +1,18 @@
 import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { CommandCenter } from './pages/CommandCenter';
-import { ProjectDetail } from './pages/ProjectDetail';
-import { WorkRequest } from './pages/WorkRequest';
-import { Reviews } from './pages/Reviews';
-import { Agents } from './pages/Agents';
 import { EngineDashboard } from './pages/EngineDashboard';
 import { ExecutionDashboard } from './pages/ExecutionDashboard';
 import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { PlatformDashboard } from './pages/PlatformDashboard';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
+import { ProjectDetail } from './pages/ProjectDetail';
+import { WorkRequest } from './pages/WorkRequest';
+import { Reviews } from './pages/Reviews';
+import { Agents } from './pages/Agents';
+import { GitHubIntegration } from './pages/GitHubIntegration';
 
-export type Page = 
-  | 'command-center' 
-  | 'project' 
-  | 'work-request' 
-  | 'reviews' 
-  | 'agents' 
-  | 'engine' 
-  | 'execution' 
-  | 'delivery'
-  | 'platform'
-  | 'analytics';
+export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents' | 'github';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
@@ -31,14 +22,6 @@ export default function App() {
     switch (currentPage) {
       case 'command-center':
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
-      case 'project':
-        return <ProjectDetail projectId={selectedProject} onBack={() => setCurrentPage('command-center')} />;
-      case 'work-request':
-        return <WorkRequest />;
-      case 'reviews':
-        return <Reviews />;
-      case 'agents':
-        return <Agents />;
       case 'engine':
         return <EngineDashboard />;
       case 'execution':
@@ -49,6 +32,16 @@ export default function App() {
         return <PlatformDashboard />;
       case 'analytics':
         return <AnalyticsDashboard />;
+      case 'project':
+        return <ProjectDetail projectId={selectedProject} onBack={() => setCurrentPage('command-center')} />;
+      case 'work-request':
+        return <WorkRequest />;
+      case 'reviews':
+        return <Reviews />;
+      case 'agents':
+        return <Agents />;
+      case 'github':
+        return <GitHubIntegration />;
       default:
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
     }
