@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { CommandCenter } from './pages/CommandCenter';
 import { EngineDashboard } from './pages/EngineDashboard';
@@ -11,12 +11,16 @@ import { WorkRequest } from './pages/WorkRequest';
 import { Reviews } from './pages/Reviews';
 import { Agents } from './pages/Agents';
 import { GitHubIntegration } from './pages/GitHubIntegration';
+import { AuthProvider, AuthGuard, UserMenu } from './auth/AuthUI';
+import { useAuthStore } from './auth/AuthStore';
+import { backendAPI } from './backend/BackendAPI';
 
 export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents' | 'github';
 
-export default function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
   const [selectedProject, setSelectedProject] = useState<string>('proj-001');
+  const { user } = useAuthStore();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -51,8 +55,28 @@ export default function App() {
     <div className="flex h-screen overflow-hidden bg-dark-900">
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
       <main className="flex-1 overflow-y-auto">
+        {user && (
+          <div className="absolute top-4 right-4 z-50">
+            <UserMenu />
+          </div>
+        )}
         {renderPage()}
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  useEffect(() => {
+    // Initialize backend API
+    backendAPI.initialize().catch(console.error);
+  }, []);
+
+  return (
+    <AuthProvider>
+      <AuthGuard>
+        <AppContent />
+      </AuthGuard>
+    </AuthProvider>
   );
 }

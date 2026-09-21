@@ -87,10 +87,13 @@ export class GroqProvider implements ModelProvider {
     
     if (!this.apiKey) {
       // Simulation mode — return realistic mock response
+      console.log('[GroqProvider] No API key, using simulation mode');
       return this.simulateResponse(request, model, startTime);
     }
 
     try {
+      console.log(`[GroqProvider] Executing request with model: ${model.id}`);
+      
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -107,8 +110,17 @@ export class GroqProvider implements ModelProvider {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Groq API error: ${response.status} - ${error}`);
+        const errorText = await response.text();
+        let errorMessage = `Groq API error: ${response.status}`;
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage += ` - ${errorJson.error?.message || errorText}`;
+        } catch {
+          errorMessage += ` - ${errorText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -118,13 +130,15 @@ export class GroqProvider implements ModelProvider {
       const outputTokens = data.usage?.completion_tokens || 0;
       const cost = this.calculateCost(model, inputTokens, outputTokens);
 
+      console.log(`[GroqProvider] Request completed in ${latency}ms, cost: $${cost.toFixed(6)}`);
+
       return {
         content: data.choices[0]?.message?.content || '',
         provider: this.name,
         model: model.id,
         inputTokens,
         outputTokens,
-        cachedTokens: 0,
+        cachedTokens: data.usage?.cached_tokens || 0,
         latency,
         cost,
         timestamp: new Date().toISOString(),
@@ -132,7 +146,7 @@ export class GroqProvider implements ModelProvider {
       };
     } catch (error) {
       // Fallback to simulation on error
-      console.warn('Groq API call failed, using simulation:', error);
+      console.warn('[GroqProvider] API call failed, using simulation:', error);
       return this.simulateResponse(request, model, startTime);
     }
   }
