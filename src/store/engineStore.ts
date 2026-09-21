@@ -7,6 +7,7 @@ import { ContextEngine } from '../engine/context/ContextEngine';
 import { AgentRegistry } from '../engine/agents/AgentRegistry';
 import { AgentHarness } from '../engine/harness/AgentHarness';
 import { getWorkflowForType } from '../engine/workflows/WorkflowEngine';
+import { persistState, loadState } from '../persistence/PersistMiddleware';
 
 // ============================================================
 // ENGINE STORE — Global State Management
@@ -41,7 +42,7 @@ interface EngineState {
   currentProjectId: string;
   
   // Actions
-  initialize: () => void;
+  initialize: () => Promise<void>;
   setGroqApiKey: (key: string) => void;
   testGroqConnection: () => Promise<boolean>;
   executeWorkflow: (type: 'user-story' | 'bug-fix' | 'feature', input: string) => Promise<void>;
@@ -49,6 +50,10 @@ interface EngineState {
   resolveApproval: (id: string, decision: 'approved' | 'rejected') => void;
   refreshState: () => void;
   addContext: (type: 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk', content: string, source: string) => void;
+  
+  // Persistence
+  saveState: () => Promise<void>;
+  loadState: () => Promise<void>;
 }
 
 export const useEngineStore = create<EngineState>((set, get) => ({
@@ -80,8 +85,11 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   currentProjectId: 'proj-demo',
   
   // Actions
-  initialize: () => {
+  initialize: async () => {
     const { modelRouter, budgetEngine, contextEngine, agentRegistry, groqProvider } = get();
+    
+    // Load persisted state first
+    await get().loadState();
     
     // Register provider
     modelRouter.registerProvider(groqProvider);
@@ -118,6 +126,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
     const { groqProvider } = get();
     groqProvider.setApiKey(key);
     set({ groqApiKey: key });
+    get().saveState(); // Persist immediately
   },
   
   testGroqConnection: async () => {
@@ -238,6 +247,9 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       approvals: harness.getApprovalQueue(),
       events: harness.getEventLog()
     }));
+    
+    // Persist state after workflow execution
+    await get().saveState();
   },
   
   executeSingleAgent: async (role, input) => {
@@ -255,6 +267,9 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       completedRuns: harness.getCompletedRuns(),
       costRecords: get().budgetEngine.getCostRecords(currentProjectId)
     }));
+    
+    // Persist state after agent execution
+    await get().saveState();
     
     return run;
   },
@@ -287,5 +302,48 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       relevance: 0.8,
       tokens: Math.ceil(content.length / 4)
     });
+  },
+  
+  // Persistence methods
+  saveState: async () => {
+    const state = get();
+    const stateToSave = {
+      groqApiKey: state.groqApiKey,
+      isGroqConnected: state.isGroqConnected,
+      currentProjectId: state.currentProjectId,
+      completedRuns: state.completedRuns,
+      costRecords: state.costRecords,
+      risks: state.risks,
+      approvals: state.approvals,
+      events: state.events
+    };
+    
+    try {
+      await persistState('engine-state', stateToSave);
+      console.log('✅ State persisted to IndexedDB');
+    } catch (error) {
+      console.error('❌ Failed to persist state:', error);
+    }
+  },
+  
+  loadState: async () => {
+    try {
+      const savedState = await loadState<any>('engine-state');
+      if (savedState) {
+        set({
+          groqApiKey: savedState.groqApiKey || '',
+          isGroqConnected: savedState.isGroqConnected || false,
+          currentProjectId: savedState.currentProjectId || 'proj-demo',
+          completedRuns: savedState.completedRuns || [],
+          costRecords: savedState.costRecords || [],
+          risks: savedState.risks || [],
+          approvals: savedState.approvals || [],
+          events: savedState.events || []
+        });
+        console.log('✅ State restored from IndexedDB');
+      }
+    } catch (error) {
+      console.error('❌ Failed to restore state:', error);
+    }
   }
 }));
