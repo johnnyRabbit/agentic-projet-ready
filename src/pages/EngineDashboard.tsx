@@ -46,7 +46,7 @@ export function EngineDashboard() {
 
   useEffect(() => {
     if (!isInitialized) {
-      initialize();
+      initialize().catch(err => console.error('Failed to initialize:', err));
     }
   }, [isInitialized, initialize]);
 
