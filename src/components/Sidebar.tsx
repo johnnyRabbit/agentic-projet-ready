@@ -10,7 +10,9 @@ import {
   Settings,
   Cpu,
   Terminal,
-  Rocket
+  Rocket,
+  HardDrive,
+  TrendingUp
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +23,8 @@ interface SidebarProps {
 const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'command-center', label: 'Command Center', icon: <LayoutDashboard size={20} /> },
   { id: 'delivery', label: 'Delivery', icon: <Rocket size={20} /> },
+  { id: 'platform', label: 'Platform', icon: <HardDrive size={20} /> },
+  { id: 'analytics', label: 'Analytics', icon: <TrendingUp size={20} /> },
   { id: 'engine', label: 'Engine', icon: <Cpu size={20} /> },
   { id: 'execution', label: 'Execution', icon: <Terminal size={20} /> },
   { id: 'project', label: 'Projects', icon: <FolderKanban size={20} /> },

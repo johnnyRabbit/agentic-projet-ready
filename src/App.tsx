@@ -8,8 +8,20 @@ import { Agents } from './pages/Agents';
 import { EngineDashboard } from './pages/EngineDashboard';
 import { ExecutionDashboard } from './pages/ExecutionDashboard';
 import { DeliveryDashboard } from './pages/DeliveryDashboard';
+import { PlatformDashboard } from './pages/PlatformDashboard';
+import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 
-export type Page = 'command-center' | 'project' | 'work-request' | 'reviews' | 'agents' | 'engine' | 'execution' | 'delivery';
+export type Page = 
+  | 'command-center' 
+  | 'project' 
+  | 'work-request' 
+  | 'reviews' 
+  | 'agents' 
+  | 'engine' 
+  | 'execution' 
+  | 'delivery'
+  | 'platform'
+  | 'analytics';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
@@ -33,6 +45,10 @@ export default function App() {
         return <ExecutionDashboard />;
       case 'delivery':
         return <DeliveryDashboard />;
+      case 'platform':
+        return <PlatformDashboard />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
       default:
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
     }
