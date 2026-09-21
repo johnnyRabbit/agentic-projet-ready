@@ -10,8 +10,9 @@ import { ProjectDetail } from './pages/ProjectDetail';
 import { WorkRequest } from './pages/WorkRequest';
 import { Reviews } from './pages/Reviews';
 import { Agents } from './pages/Agents';
+import { GitHubIntegration } from './pages/GitHubIntegration';
 
-export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents';
+export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents' | 'github';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
@@ -39,6 +40,8 @@ export default function App() {
         return <Reviews />;
       case 'agents':
         return <Agents />;
+      case 'github':
+        return <GitHubIntegration />;
       default:
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
     }

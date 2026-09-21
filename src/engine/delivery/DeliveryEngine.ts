@@ -160,8 +160,12 @@ export class DeliveryEngine {
       const githubCommit: GitHubCommit = {
         sha: commit.hash,
         message: commit.message,
-        author: commit.author,
-        timestamp: commit.timestamp,
+        author: {
+          name: commit.author,
+          email: 'ai-team@example.com',
+          date: commit.timestamp
+        },
+        url: `https://github.com/example/repo/commit/${commit.hash}`,
         files: fileChanges,
         stats: {
           additions: fileChanges.reduce((sum, f) => sum + f.additions, 0),

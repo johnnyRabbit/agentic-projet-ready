@@ -44,10 +44,13 @@ export class PullRequestGenerator {
       files: input.files.length
     };
 
+    const description = this.generateDescription(input);
+    
     const pr: PullRequest = {
       number,
       title: input.title,
-      description: this.generateDescription(input),
+      body: description,
+      description: description,
       status: this.determineStatus(input),
       author: input.author,
       branch: input.branch,
