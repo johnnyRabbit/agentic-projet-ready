@@ -8,6 +8,46 @@ class AuthService {
   private readonly STORAGE_KEY = 'auth_session';
   private readonly USER_KEY = 'auth_user';
   private readonly USERS_DB = 'users_db';
+  private readonly DEMO_USER_CREATED = 'demo_user_created';
+
+  constructor() {
+    // Initialize demo user on first load
+    this.initializeDemoUser();
+  }
+
+  /**
+   * Initialize demo user if not exists
+   */
+  private async initializeDemoUser(): Promise<void> {
+    const demoCreated = localStorage.getItem(this.DEMO_USER_CREATED);
+    if (demoCreated) return;
+
+    try {
+      console.log('[AuthService] Creating demo user...');
+      
+      const demoPassword = 'demo123';
+      const hashedPassword = await this.hashPassword(demoPassword);
+      
+      const demoUser = {
+        id: 'demo_user_001',
+        email: 'demo@example.com',
+        name: 'Demo User',
+        password: hashedPassword,
+        role: 'admin' as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await this.storeUser(demoUser);
+      localStorage.setItem(this.DEMO_USER_CREATED, 'true');
+      
+      console.log('[AuthService] Demo user created successfully');
+      console.log('[AuthService] Email: demo@example.com');
+      console.log('[AuthService] Password: demo123');
+    } catch (error) {
+      console.error('[AuthService] Failed to create demo user:', error);
+    }
+  }
 
   /**
    * Register a new user
@@ -49,17 +89,25 @@ class AuthService {
    * Login with email and password
    */
   async login(credentials: AuthCredentials): Promise<AuthResponse> {
+    console.log('[AuthService] Login attempt:', credentials.email);
+    
     // Get user with password
     const userRecord = await this.getUserRecordByEmail(credentials.email);
     if (!userRecord) {
+      console.error('[AuthService] User not found:', credentials.email);
       throw new Error('Invalid email or password');
     }
+
+    console.log('[AuthService] User found, verifying password...');
 
     // Verify password
     const isValid = await this.verifyPassword(credentials.password, userRecord.password);
     if (!isValid) {
+      console.error('[AuthService] Password verification failed');
       throw new Error('Invalid email or password');
     }
+
+    console.log('[AuthService] Login successful for:', credentials.email);
 
     // Update last login
     const user: User = {
@@ -163,7 +211,17 @@ class AuthService {
 
   private async getUserRecordByEmail(email: string): Promise<any | null> {
     const users = await this.getAllUserRecords();
-    return users.find(u => u.email === email) || null;
+    console.log('[AuthService] Searching for user:', email);
+    console.log('[AuthService] Total users in DB:', users.length);
+    
+    const user = users.find(u => u.email === email);
+    if (user) {
+      console.log('[AuthService] User found:', user.email);
+    } else {
+      console.log('[AuthService] User not found in DB');
+    }
+    
+    return user || null;
   }
 
   private async getAllUsers(): Promise<User[]> {
@@ -173,26 +231,39 @@ class AuthService {
 
   private async getAllUserRecords(): Promise<any[]> {
     const data = localStorage.getItem(this.USERS_DB);
-    if (!data) return [];
+    console.log('[AuthService] Reading users from localStorage');
+    
+    if (!data) {
+      console.log('[AuthService] No users found in localStorage');
+      return [];
+    }
     
     try {
-      return JSON.parse(data);
-    } catch {
+      const users = JSON.parse(data);
+      console.log('[AuthService] Parsed users:', users.length);
+      return users;
+    } catch (error) {
+      console.error('[AuthService] Failed to parse users:', error);
       return [];
     }
   }
 
   private async storeUser(user: User | any): Promise<void> {
+    console.log('[AuthService] Storing user:', user.email);
+    
     const users = await this.getAllUserRecords();
     const index = users.findIndex(u => u.id === user.id);
     
     if (index >= 0) {
+      console.log('[AuthService] Updating existing user at index:', index);
       users[index] = user;
     } else {
+      console.log('[AuthService] Adding new user');
       users.push(user);
     }
 
     localStorage.setItem(this.USERS_DB, JSON.stringify(users));
+    console.log('[AuthService] User stored successfully. Total users:', users.length);
   }
 
   private async createSession(userId: string): Promise<AuthSession> {
@@ -212,17 +283,31 @@ class AuthService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    // Simple hash for demo - use bcrypt in production
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+      // Simple hash for demo - use bcrypt in production
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      console.log('[AuthService] Password hashed successfully');
+      return hash;
+    } catch (error) {
+      console.error('[AuthService] Failed to hash password:', error);
+      throw new Error('Failed to hash password');
+    }
   }
 
   private async verifyPassword(password: string, hash: string): Promise<boolean> {
-    const passwordHash = await this.hashPassword(password);
-    return passwordHash === hash;
+    try {
+      const passwordHash = await this.hashPassword(password);
+      const isValid = passwordHash === hash;
+      console.log('[AuthService] Password verification:', isValid ? 'SUCCESS' : 'FAILED');
+      return isValid;
+    } catch (error) {
+      console.error('[AuthService] Failed to verify password:', error);
+      return false;
+    }
   }
 
   private generateId(): string {
