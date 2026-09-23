@@ -18,7 +18,9 @@ import { ThemeProvider } from './components/ThemeToggle';
 import { ToastContainer, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CommandPalette, useCommandPalette } from './components/CommandPalette';
+import { DebugPanel } from './components/DebugPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { auditLog } from './observability/AuditLog';
 
 export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents' | 'github';
 
@@ -97,7 +99,13 @@ function AppContent() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-dark-900">
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+      <Sidebar currentPage={currentPage} onNavigate={(page) => {
+        auditLog.log('navigate', 'page', {
+          userId: user?.id,
+          details: { page },
+        });
+        setCurrentPage(page);
+      }} />
       <main className="flex-1 overflow-y-auto">
         {user && (
           <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
@@ -112,6 +120,9 @@ function AppContent() {
 
       {/* Command Palette */}
       <CommandPalette isOpen={commandPalette.isOpen} onClose={commandPalette.close} />
+
+      {/* Debug Panel */}
+      <DebugPanel />
     </div>
   );
 }
