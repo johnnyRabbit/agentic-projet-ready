@@ -14,7 +14,15 @@ export type AgentRole =
   | 'debugger'
   | 'architect'
   | 'estimator'
-  | 'risk';
+  | 'risk'
+  | 'data-analyst'
+  | 'ui-ux-designer'
+  | 'documentation-writer'
+  | 'devops-engineer'
+  | 'mobile-specialist'
+  | 'database-specialist'
+  | 'api-designer'
+  | 'performance-engineer';
 
 export type AgentStatus = 'idle' | 'running' | 'waiting' | 'blocked' | 'complete' | 'failed' | 'escalated';
 

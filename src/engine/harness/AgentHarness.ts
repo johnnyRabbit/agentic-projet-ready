@@ -371,7 +371,15 @@ export class AgentHarness {
       debugger: 'code',
       architect: 'architecture',
       estimator: 'task',
-      risk: 'risk'
+      risk: 'risk',
+      'data-analyst': 'task',
+      'ui-ux-designer': 'architecture',
+      'documentation-writer': 'requirements',
+      'devops-engineer': 'architecture',
+      'mobile-specialist': 'code',
+      'database-specialist': 'architecture',
+      'api-designer': 'architecture',
+      'performance-engineer': 'code'
     };
     return mapping[role] || 'task';
   }
@@ -389,7 +397,15 @@ export class AgentHarness {
       debugger: 'code-generation',
       architect: 'reasoning',
       estimator: 'planning',
-      risk: 'reasoning'
+      risk: 'reasoning',
+      'data-analyst': 'reasoning',
+      'ui-ux-designer': 'creative',
+      'documentation-writer': 'creative',
+      'devops-engineer': 'code-generation',
+      'mobile-specialist': 'code-generation',
+      'database-specialist': 'code-generation',
+      'api-designer': 'code-generation',
+      'performance-engineer': 'code-generation'
     };
     return mapping[role] || 'reasoning';
   }
@@ -438,7 +454,15 @@ export class AgentHarness {
       debugger: 'code',
       architect: 'decision',
       estimator: 'plan',
-      risk: 'risk'
+      risk: 'risk',
+      'data-analyst': 'decision',
+      'ui-ux-designer': 'decision',
+      'documentation-writer': 'requirements',
+      'devops-engineer': 'plan',
+      'mobile-specialist': 'code',
+      'database-specialist': 'code',
+      'api-designer': 'code',
+      'performance-engineer': 'review'
     };
     return mapping[role] || 'decision';
   }
