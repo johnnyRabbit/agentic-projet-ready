@@ -1,10 +1,10 @@
 import { Page } from '../App';
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  Plus, 
-  CheckSquare, 
-  Bot, 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Plus,
+  CheckSquare,
+  Bot,
   Activity,
   Shield,
   Settings,
@@ -13,7 +13,7 @@ import {
   Rocket,
   HardDrive,
   TrendingUp,
-  Github
+  Github,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ interface SidebarProps {
 const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'command-center', label: 'Command Center', icon: <LayoutDashboard size={20} /> },
   { id: 'delivery', label: 'Delivery', icon: <Rocket size={20} /> },
+  { id: 'kanban', label: 'Kanban Board', icon: <FolderKanban size={20} /> },
   { id: 'platform', label: 'Platform', icon: <HardDrive size={20} /> },
   { id: 'analytics', label: 'Analytics', icon: <TrendingUp size={20} /> },
   { id: 'engine', label: 'Engine', icon: <Cpu size={20} /> },
@@ -66,7 +67,9 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             {item.icon}
             {item.label}
             {item.id === 'reviews' && (
-              <span className="ml-auto bg-danger/20 text-danger text-xs px-1.5 py-0.5 rounded-full">2</span>
+              <span className="ml-auto bg-danger/20 text-danger text-xs px-1.5 py-0.5 rounded-full">
+                2
+              </span>
             )}
           </button>
         ))}
@@ -94,11 +97,14 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 mt-3 px-1">
           <Shield size={14} className="text-slate-500" />
           <span className="text-xs text-slate-500">Autonomy Level 3</span>
-          <Settings size={14} className="text-slate-500 ml-auto cursor-pointer hover:text-slate-300" />
+          <Settings
+            size={14}
+            className="text-slate-500 ml-auto cursor-pointer hover:text-slate-300"
+          />
         </div>
       </div>
     </aside>

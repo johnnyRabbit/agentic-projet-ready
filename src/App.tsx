@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
+import { MobileSidebar } from './components/MobileSidebar';
 import { CommandCenter } from './pages/CommandCenter';
 import { EngineDashboard } from './pages/EngineDashboard';
 import { ExecutionDashboard } from './pages/ExecutionDashboard';
@@ -11,6 +12,7 @@ import { WorkRequest } from './pages/WorkRequest';
 import { Reviews } from './pages/Reviews';
 import { Agents } from './pages/Agents';
 import { GitHubIntegration } from './pages/GitHubIntegration';
+import { KanbanPage } from './pages/KanbanPage';
 import { AuthProvider, AuthGuard, UserMenu } from './auth/AuthUI';
 import { useAuthStore } from './auth/AuthStore';
 import { backendAPI } from './backend/BackendAPI';
@@ -19,10 +21,24 @@ import { ToastContainer, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CommandPalette, useCommandPalette } from './components/CommandPalette';
 import { DebugPanel } from './components/DebugPanel';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { auditLog } from './observability/AuditLog';
+import './i18n/config';
 
-export type Page = 'command-center' | 'delivery' | 'platform' | 'analytics' | 'engine' | 'execution' | 'project' | 'work-request' | 'reviews' | 'agents' | 'github';
+export type Page =
+  | 'command-center'
+  | 'delivery'
+  | 'platform'
+  | 'analytics'
+  | 'engine'
+  | 'execution'
+  | 'project'
+  | 'work-request'
+  | 'reviews'
+  | 'agents'
+  | 'github'
+  | 'kanban';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('command-center');
@@ -37,7 +53,7 @@ function AppContent() {
       key: 'k',
       ctrl: true,
       description: 'Command Palette',
-      action: commandPalette.toggle
+      action: commandPalette.toggle,
     },
     {
       key: 'n',
@@ -46,26 +62,26 @@ function AppContent() {
       action: () => {
         setCurrentPage('work-request');
         toast.info('Criar novo projeto', 'Use o formulário para criar um novo projeto');
-      }
+      },
     },
     {
       key: '1',
       ctrl: true,
       description: 'Ir para Dashboard',
-      action: () => setCurrentPage('command-center')
+      action: () => setCurrentPage('command-center'),
     },
     {
       key: '2',
       ctrl: true,
       description: 'Ir para Engine',
-      action: () => setCurrentPage('engine')
+      action: () => setCurrentPage('engine'),
     },
     {
       key: '3',
       ctrl: true,
       description: 'Ir para Delivery',
-      action: () => setCurrentPage('delivery')
-    }
+      action: () => setCurrentPage('delivery'),
+    },
   ]);
 
   const renderPage = () => {
@@ -83,7 +99,12 @@ function AppContent() {
       case 'analytics':
         return <AnalyticsDashboard />;
       case 'project':
-        return <ProjectDetail projectId={selectedProject} onBack={() => setCurrentPage('command-center')} />;
+        return (
+          <ProjectDetail
+            projectId={selectedProject}
+            onBack={() => setCurrentPage('command-center')}
+          />
+        );
       case 'work-request':
         return <WorkRequest />;
       case 'reviews':
@@ -92,6 +113,8 @@ function AppContent() {
         return <Agents />;
       case 'github':
         return <GitHubIntegration />;
+      case 'kanban':
+        return <KanbanPage />;
       default:
         return <CommandCenter onNavigate={setCurrentPage} onSelectProject={setSelectedProject} />;
     }
@@ -99,16 +122,30 @@ function AppContent() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-dark-900">
-      <Sidebar currentPage={currentPage} onNavigate={(page) => {
-        auditLog.log('navigate', 'page', {
-          userId: user?.id,
-          details: { page },
-        });
-        setCurrentPage(page);
-      }} />
+      <Sidebar
+        currentPage={currentPage}
+        onNavigate={(page) => {
+          auditLog.log('navigate', 'page', {
+            userId: user?.id,
+            details: { page },
+          });
+          setCurrentPage(page);
+        }}
+      />
+      <MobileSidebar
+        currentPage={currentPage}
+        onNavigate={(page) => {
+          auditLog.log('navigate', 'page', {
+            userId: user?.id,
+            details: { page },
+          });
+          setCurrentPage(page);
+        }}
+      />
       <main className="flex-1 overflow-y-auto">
         {user && (
           <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+            <LanguageSwitcher />
             <UserMenu />
           </div>
         )}

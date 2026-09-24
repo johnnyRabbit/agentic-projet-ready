@@ -1,52 +1,92 @@
 import { useState, useEffect } from 'react';
-import { analyticsEngine } from '../analytics/AnalyticsEngine';
-import { TrendingUp, DollarSign, Clock, Target, Download, BarChart3 } from 'lucide-react';
+import {
+  CostOverTimeChart,
+  AgentPerformanceChart,
+  SuccessRateChart,
+  DeliveryTrendsChart,
+  TokenUsageChart,
+  CostByPhaseChart,
+} from '../components/charts/AnalyticsCharts';
+import { TrendingUp, DollarSign, Clock, Target, Download, Activity } from 'lucide-react';
+
+// Mock data for demonstration
+const mockCostOverTime = [
+  { date: '2026-03-01', cost: 2.5 },
+  { date: '2026-03-02', cost: 3.2 },
+  { date: '2026-03-03', cost: 1.8 },
+  { date: '2026-03-04', cost: 4.1 },
+  { date: '2026-03-05', cost: 2.9 },
+  { date: '2026-03-06', cost: 3.5 },
+  { date: '2026-03-07', cost: 2.2 },
+];
+
+const mockAgentPerformance = [
+  { role: 'developer', runs: 45, cost: 12.5 },
+  { role: 'reviewer', runs: 32, cost: 8.2 },
+  { role: 'tester', runs: 28, cost: 6.8 },
+  { role: 'planner', runs: 22, cost: 4.5 },
+  { role: 'architect', runs: 15, cost: 5.1 },
+];
+
+const mockSuccessRate = [
+  { name: 'Success', value: 85 },
+  { name: 'Failed', value: 10 },
+  { name: 'Pending', value: 5 },
+];
+
+const mockDeliveryTrends = [
+  { date: '2026-03-01', count: 3 },
+  { date: '2026-03-02', count: 5 },
+  { date: '2026-03-03', count: 2 },
+  { date: '2026-03-04', count: 7 },
+  { date: '2026-03-05', count: 4 },
+  { date: '2026-03-06', count: 6 },
+  { date: '2026-03-07', count: 3 },
+];
+
+const mockTokenUsage = [
+  { date: '2026-03-01', input: 15000, output: 8000 },
+  { date: '2026-03-02', input: 18000, output: 9500 },
+  { date: '2026-03-03', input: 12000, output: 6500 },
+  { date: '2026-03-04', input: 22000, output: 11000 },
+  { date: '2026-03-05', input: 16000, output: 8500 },
+  { date: '2026-03-06', input: 19000, output: 10000 },
+  { date: '2026-03-07', input: 14000, output: 7500 },
+];
+
+const mockCostByPhase = [
+  { phase: 'Requirements', cost: 1.2 },
+  { phase: 'Planning', cost: 1.8 },
+  { phase: 'Implementation', cost: 8.5 },
+  { phase: 'Testing', cost: 2.3 },
+  { phase: 'Review', cost: 1.5 },
+];
 
 export function AnalyticsDashboard() {
-  const [summary, setSummary] = useState<any>(null);
-  const [costOverTime, setCostOverTime] = useState<any[]>([]);
-  const [agentPerformance, setAgentPerformance] = useState<any[]>([]);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [projectAnalytics, setProjectAnalytics] = useState<any>(null);
+  const [summary, setSummary] = useState({
+    totalCost: 20.2,
+    totalDeliveries: 27,
+    successRate: 85.2,
+    totalTokens: 116000,
+    avgCostPerDelivery: 0.75,
+    avgDuration: 2450,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const handleExport = () => {
+    const data = {
+      summary,
+      costOverTime: mockCostOverTime,
+      agentPerformance: mockAgentPerformance,
+      exportedAt: new Date().toISOString(),
+    };
 
-  const loadData = async () => {
-    const summaryData = await analyticsEngine.getSummary();
-    setSummary(summaryData);
-
-    const costData = await analyticsEngine.getCostOverTime(30);
-    setCostOverTime(costData);
-
-    const agentData = await analyticsEngine.getAgentPerformance();
-    setAgentPerformance(agentData);
-
-    const activityData = await analyticsEngine.getRecentActivity(10);
-    setRecentActivity(activityData);
-  };
-
-  const handleExport = async () => {
-    const data = await analyticsEngine.exportAnalytics();
-    const blob = new Blob([data], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const formatCurrency = (value: number): string => {
-    return '€' + value.toFixed(2);
-  };
-
-  const formatDuration = (ms: number): string => {
-    if (ms < 1000) return ms + 'ms';
-    if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
-    return (ms / 60000).toFixed(1) + 'm';
   };
 
   return (
@@ -58,9 +98,7 @@ export function AnalyticsDashboard() {
             <TrendingUp size={24} className="text-indigo-400" />
             Analytics Dashboard
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Historical Metrics • Performance Insights • Cost Analysis
-          </p>
+          <p className="text-slate-400 text-sm mt-1">Visual insights and performance metrics</p>
         </div>
         <button
           onClick={handleExport}
@@ -78,11 +116,9 @@ export function AnalyticsDashboard() {
             <DollarSign size={18} className="text-green-400" />
             <span className="text-xs text-slate-400">Total Cost</span>
           </div>
-          <div className="text-2xl font-bold text-white">
-            {summary ? formatCurrency(summary.totalCost) : '€0.00'}
-          </div>
+          <div className="text-2xl font-bold text-white">€{summary.totalCost.toFixed(2)}</div>
           <div className="text-xs text-slate-400 mt-1">
-            Avg: {summary ? formatCurrency(summary.averageCostPerDelivery) : '€0.00'}/delivery
+            Avg: €{summary.avgCostPerDelivery.toFixed(2)}/delivery
           </div>
         </div>
 
@@ -92,11 +128,9 @@ export function AnalyticsDashboard() {
             <span className="text-xs text-slate-400">Avg Duration</span>
           </div>
           <div className="text-2xl font-bold text-white">
-            {summary ? formatDuration(summary.averageDurationPerDelivery) : '0ms'}
+            {(summary.avgDuration / 1000).toFixed(1)}s
           </div>
-          <div className="text-xs text-slate-400 mt-1">
-            {summary?.totalDeliveries || 0} deliveries
-          </div>
+          <div className="text-xs text-slate-400 mt-1">{summary.totalDeliveries} deliveries</div>
         </div>
 
         <div className="glass-card rounded-xl p-6">
@@ -104,111 +138,36 @@ export function AnalyticsDashboard() {
             <Target size={18} className="text-purple-400" />
             <span className="text-xs text-slate-400">Success Rate</span>
           </div>
-          <div className="text-2xl font-bold text-success">
-            {summary?.successRate.toFixed(1) || '0'}%
-          </div>
-          <div className="text-xs text-slate-400 mt-1">
-            {summary?.totalDeliveries || 0} total runs
-          </div>
+          <div className="text-2xl font-bold text-success">{summary.successRate.toFixed(1)}%</div>
+          <div className="text-xs text-slate-400 mt-1">{summary.totalDeliveries} total runs</div>
         </div>
 
         <div className="glass-card rounded-xl p-6">
           <div className="flex items-center gap-2 mb-2">
-            <BarChart3 size={18} className="text-orange-400" />
+            <Activity size={18} className="text-orange-400" />
             <span className="text-xs text-slate-400">Total Tokens</span>
           </div>
           <div className="text-2xl font-bold text-white">
-            {summary ? (summary.totalTokens / 1000).toFixed(1) + 'k' : '0'}
+            {(summary.totalTokens / 1000).toFixed(1)}k
           </div>
-          <div className="text-xs text-slate-400 mt-1">
-            Across all agents
-          </div>
+          <div className="text-xs text-slate-400 mt-1">Across all agents</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        {/* Cost Over Time */}
-        <div className="glass-card rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-white mb-4">Cost Over Time (30 days)</h2>
-          {costOverTime.length > 0 ? (
-            <div className="space-y-2">
-              {costOverTime.slice(-7).map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400 w-20">{item.date}</span>
-                  <div className="flex-1 h-2 bg-dark-500 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                      style={{
-                        width: `${Math.min((item.cost / Math.max(...costOverTime.map(d => d.cost))) * 100, 100)}%`
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-white w-16 text-right">
-                    {formatCurrency(item.cost)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500">No cost data yet</p>
-          )}
-        </div>
-
-        {/* Agent Performance */}
-        <div className="glass-card rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-white mb-4">Agent Performance</h2>
-          {agentPerformance.length > 0 ? (
-            <div className="space-y-3">
-              {agentPerformance.slice(0, 5).map((agent, i) => (
-                <div key={i} className="bg-dark-700 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white font-medium capitalize">{agent.role}</span>
-                    <span className="text-xs text-slate-400">{agent.runs} runs</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-slate-400">Success</div>
-                      <div className="text-success">{agent.successRate.toFixed(0)}%</div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400">Avg Cost</div>
-                      <div className="text-white">{formatCurrency(agent.averageCost)}</div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400">Avg Time</div>
-                      <div className="text-white">{formatDuration(agent.averageDuration)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500">No agent data yet</p>
-          )}
-        </div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <CostOverTimeChart data={mockCostOverTime} title="Cost Over Time (7 days)" />
+        <AgentPerformanceChart data={mockAgentPerformance} title="Agent Performance" />
       </div>
 
-      {/* Recent Activity */}
-      <div className="glass-card rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-white mb-4">Recent Activity</h2>
-        {recentActivity.length > 0 ? (
-          <div className="space-y-2">
-            {recentActivity.map((activity, i) => (
-              <div key={i} className="flex items-center gap-3 bg-dark-700 rounded-lg p-3">
-                <div className="w-2 h-2 rounded-full bg-indigo-400" />
-                <div className="flex-1">
-                  <div className="text-sm text-white">{activity.description}</div>
-                  <div className="text-xs text-slate-400">
-                    {new Date(activity.timestamp).toLocaleString()}
-                  </div>
-                </div>
-                <span className="text-xs text-slate-500 capitalize">{activity.type}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-slate-500">No recent activity</p>
-        )}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <SuccessRateChart data={mockSuccessRate} title="Success Rate Distribution" />
+        <DeliveryTrendsChart data={mockDeliveryTrends} title="Delivery Trends (7 days)" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <TokenUsageChart data={mockTokenUsage} title="Token Usage (Input vs Output)" />
+        <CostByPhaseChart data={mockCostByPhase} title="Cost Distribution by Phase" />
       </div>
     </div>
   );
