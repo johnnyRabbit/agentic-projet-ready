@@ -68,7 +68,12 @@ export function WorkRequest() {
         setLoaded(true);
       })
       .catch(() => {
-        if (active) setError('Não foi possível carregar os pedidos. Recarregue a página.');
+        if (active) {
+          setError(
+            'Não foi possível aceder ao armazenamento local. Ainda pode escrever uma ideia e tentar guardar.'
+          );
+          setLoaded(true);
+        }
       });
     return () => {
       active = false;
@@ -125,13 +130,10 @@ export function WorkRequest() {
           {error}
         </p>
       )}
-      {!loaded && !error && <p role="status">A carregar pedidos…</p>}
+      {!loaded && <p role="status">A carregar pedidos…</p>}
       <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
         <main className="space-y-6 min-w-0">
-          <fieldset
-            disabled={busy || !loaded || dirty}
-            className="space-y-4 glass-card p-5 rounded-xl"
-          >
+          <fieldset disabled={busy || dirty} className="space-y-4 glass-card p-5 rounded-xl">
             <TextField
               label="Nova ideia ou especificação (texto)"
               value={input}
@@ -154,6 +156,16 @@ export function WorkRequest() {
               Até 30 000 caracteres. Upload, Jira e importação de repositórios serão
               disponibilizados numa fase posterior.
             </p>
+            {error && (
+              <button
+                className={buttonClass}
+                type="button"
+                disabled={busy}
+                onClick={() => window.location.reload()}
+              >
+                Tentar carregar pedidos novamente
+              </button>
+            )}
           </fieldset>
           {selected && (
             <section className="glass-card rounded-xl p-5 space-y-4" aria-label="Pedido guardado">
