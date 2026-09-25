@@ -117,8 +117,9 @@ export class WebWorkerSandbox {
       throw new Error('Worker not initialized');
     }
 
-    return new Promise((resolve, reject) => {
-      const worker = new Worker(this.workerUrl!);
+    const workerUrl = this.workerUrl;
+    return new Promise((resolve) => {
+      const worker = new Worker(workerUrl);
       const startTime = Date.now();
       const logs: string[] = [];
 
@@ -130,7 +131,7 @@ export class WebWorkerSandbox {
           output: logs.join('\n'),
           error: `Operation timeout (${this.timeoutMs}ms)`,
           duration: Date.now() - startTime,
-          logs
+          logs,
         });
       }, this.timeoutMs + 1000); // Extra buffer
 
@@ -149,7 +150,7 @@ export class WebWorkerSandbox {
             returnValue: e.data.returnValue,
             error: e.data.error,
             duration: e.data.duration,
-            logs
+            logs,
           });
         }
       };
@@ -163,7 +164,7 @@ export class WebWorkerSandbox {
           output: logs.join('\n'),
           error: error.message || 'Worker error',
           duration: Date.now() - startTime,
-          logs
+          logs,
         });
       };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   CostOverTimeChart,
   AgentPerformanceChart,
@@ -63,7 +63,7 @@ const mockCostByPhase = [
 ];
 
 export function AnalyticsDashboard() {
-  const [summary, setSummary] = useState({
+  const [summary] = useState({
     totalCost: 20.2,
     totalDeliveries: 27,
     successRate: 85.2,

@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useGitHubStore } from '../store/githubStore';
-import { 
-  Github, 
-  LogIn, 
-  LogOut, 
-  RefreshCw, 
-  Plus, 
+import {
+  Github,
+  LogIn,
+  LogOut,
+  RefreshCw,
+  Plus,
   Trash2,
   ExternalLink,
-  CheckCircle2,
-  XCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 
 export function GitHubIntegration() {
@@ -32,7 +30,7 @@ export function GitHubIntegration() {
     loadPullRequests,
     loadWebhooks,
     createWebhook,
-    deleteWebhook
+    deleteWebhook,
   } = useGitHubStore();
 
   const [showConfig, setShowConfig] = useState(false);
@@ -47,13 +45,16 @@ export function GitHubIntegration() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    
+
     if (code) {
       // Handle OAuth callback
-      useGitHubStore.getState().handleOAuthCallback(code).then(() => {
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      });
+      useGitHubStore
+        .getState()
+        .handleOAuthCallback(code)
+        .then(() => {
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
     }
   }, []);
 
@@ -74,9 +75,9 @@ export function GitHubIntegration() {
       clientId,
       clientSecret,
       redirectUri,
-      scope: 'repo workflow webhook'
+      scope: 'repo workflow webhook',
     };
-    
+
     localStorage.setItem('github_config', JSON.stringify(newConfig));
     initialize(newConfig);
     setShowConfig(false);
@@ -139,7 +140,7 @@ export function GitHubIntegration() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="glass-card rounded-xl p-6 max-w-md w-full mx-4">
               <h2 className="text-lg font-semibold text-white mb-4">GitHub OAuth Configuration</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-slate-400 block mb-1.5">Client ID</label>
@@ -179,7 +180,10 @@ export function GitHubIntegration() {
                   <ol className="text-xs text-slate-300 space-y-1 list-decimal list-inside">
                     <li>Go to GitHub Settings → Developer settings → OAuth Apps</li>
                     <li>Click "New OAuth App"</li>
-                    <li>Set Authorization callback URL to: <code className="text-indigo-400">{redirectUri}</code></li>
+                    <li>
+                      Set Authorization callback URL to:{' '}
+                      <code className="text-indigo-400">{redirectUri}</code>
+                    </li>
                     <li>Copy Client ID and Client Secret here</li>
                   </ol>
                 </div>
@@ -287,7 +291,9 @@ export function GitHubIntegration() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm text-white font-medium">{repo.name}</span>
                     {repo.private && (
-                      <span className="text-xs bg-dark-600 text-slate-400 px-1.5 py-0.5 rounded">Private</span>
+                      <span className="text-xs bg-dark-600 text-slate-400 px-1.5 py-0.5 rounded">
+                        Private
+                      </span>
                     )}
                   </div>
                   <div className="text-xs text-slate-400">{repo.fullName}</div>
@@ -326,11 +332,13 @@ export function GitHubIntegration() {
                             <span className="text-sm text-white font-medium">{pr.title}</span>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-slate-400">
-                            <span>{pr.head.ref} → {pr.base.ref}</span>
+                            <span>
+                              {pr.head.ref} → {pr.base.ref}
+                            </span>
                             <span>•</span>
-                            <span>{pr.additions} additions</span>
+                            <span>{pr.additions ?? '—'} additions</span>
                             <span>•</span>
-                            <span>{pr.deletions} deletions</span>
+                            <span>{pr.deletions ?? '—'} deletions</span>
                           </div>
                         </div>
                         <a
@@ -344,11 +352,15 @@ export function GitHubIntegration() {
                         </a>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          pr.state === 'open' ? 'bg-success/20 text-success' :
-                          pr.state === 'merged' ? 'bg-purple-500/20 text-purple-400' :
-                          'bg-danger/20 text-danger'
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            pr.state === 'open'
+                              ? 'bg-success/20 text-success'
+                              : pr.state === 'merged'
+                                ? 'bg-purple-500/20 text-purple-400'
+                                : 'bg-danger/20 text-danger'
+                          }`}
+                        >
                           {pr.state}
                         </span>
                       </div>
@@ -390,21 +402,31 @@ export function GitHubIntegration() {
                   <p className="text-xs text-slate-500 text-center py-8">No webhooks configured</p>
                 ) : (
                   webhooks.map((webhook) => (
-                    <div key={webhook.id} className="bg-dark-700 rounded-lg p-3 border border-dark-500">
+                    <div
+                      key={webhook.id}
+                      className="bg-dark-700 rounded-lg p-3 border border-dark-500"
+                    >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm text-white font-medium">{webhook.name}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              webhook.active ? 'bg-success/20 text-success' : 'bg-slate-500/20 text-slate-400'
-                            }`}>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                webhook.active
+                                  ? 'bg-success/20 text-success'
+                                  : 'bg-slate-500/20 text-slate-400'
+                              }`}
+                            >
                               {webhook.active ? 'Active' : 'Inactive'}
                             </span>
                           </div>
                           <div className="text-xs text-slate-400 mb-1">{webhook.config.url}</div>
                           <div className="flex flex-wrap gap-1">
                             {webhook.events.map((event) => (
-                              <span key={event} className="text-xs bg-dark-600 text-slate-300 px-2 py-0.5 rounded">
+                              <span
+                                key={event}
+                                className="text-xs bg-dark-600 text-slate-300 px-2 py-0.5 rounded"
+                              >
                                 {event}
                               </span>
                             ))}
@@ -426,7 +448,7 @@ export function GitHubIntegration() {
               {showWebhookForm && (
                 <div className="mt-4 bg-dark-700 rounded-lg p-4 border border-dark-500">
                   <h3 className="text-sm font-medium text-white mb-3">Create Webhook</h3>
-                  
+
                   <div className="space-y-3">
                     <div>
                       <label className="text-xs text-slate-400 block mb-1.5">Payload URL</label>
@@ -443,7 +465,10 @@ export function GitHubIntegration() {
                       <label className="text-xs text-slate-400 block mb-1.5">Events</label>
                       <div className="flex flex-wrap gap-2">
                         {['pull_request', 'issues', 'push', 'check_run', 'status'].map((event) => (
-                          <label key={event} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                          <label
+                            key={event}
+                            className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
+                          >
                             <input
                               type="checkbox"
                               checked={webhookEvents.includes(event)}
@@ -451,7 +476,7 @@ export function GitHubIntegration() {
                                 if (e.target.checked) {
                                   setWebhookEvents([...webhookEvents, event]);
                                 } else {
-                                  setWebhookEvents(webhookEvents.filter(e => e !== event));
+                                  setWebhookEvents(webhookEvents.filter((e) => e !== event));
                                 }
                               }}
                               className="rounded"

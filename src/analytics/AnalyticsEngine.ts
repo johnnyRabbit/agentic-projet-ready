@@ -4,7 +4,7 @@
 // Tracks and analyzes historical data to provide insights
 // on performance, costs, success rates, and trends.
 
-import { database } from '../persistence/Database';
+import { database, PullRequestRecord, EventRecord } from '../persistence/Database';
 
 export interface AnalyticsSummary {
   totalProjects: number;
@@ -45,7 +45,7 @@ export class AnalyticsEngine {
     const totalCost = agentRuns.reduce((sum, run) => sum + run.cost, 0);
     const totalTokens = agentRuns.reduce((sum, run) => sum + run.tokens, 0);
     const totalDuration = agentRuns.reduce((sum, run) => sum + run.duration, 0);
-    const successfulRuns = agentRuns.filter(r => r.status === 'complete').length;
+    const successfulRuns = agentRuns.filter((r) => r.status === 'complete').length;
 
     // Top agents by usage
     const agentMap = new Map<string, { count: number; cost: number }>();
@@ -72,7 +72,7 @@ export class AnalyticsEngine {
       .map(([phase, cost]) => ({
         phase,
         cost,
-        percentage: totalCost > 0 ? (cost / totalCost) * 100 : 0
+        percentage: totalCost > 0 ? (cost / totalCost) * 100 : 0,
       }))
       .sort((a, b) => b.cost - a.cost);
 
@@ -90,7 +90,7 @@ export class AnalyticsEngine {
       successRate: agentRuns.length > 0 ? (successfulRuns / agentRuns.length) * 100 : 0,
       topAgents,
       costByPhase,
-      deliveryTrend
+      deliveryTrend,
     };
   }
 
@@ -107,11 +107,14 @@ export class AnalyticsEngine {
     const totalCost = agentRuns.reduce((sum, run) => sum + run.cost, 0);
     const totalTokens = agentRuns.reduce((sum, run) => sum + run.tokens, 0);
     const totalDuration = agentRuns.reduce((sum, run) => sum + run.duration, 0);
-    const successfulRuns = agentRuns.filter(r => r.status === 'complete').length;
+    const successfulRuns = agentRuns.filter((r) => r.status === 'complete').length;
 
-    const lastDelivery = pullRequests.length > 0
-      ? pullRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
-      : '';
+    const lastDelivery =
+      pullRequests.length > 0
+        ? pullRequests.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )[0].createdAt
+        : '';
 
     return {
       projectId,
@@ -123,14 +126,16 @@ export class AnalyticsEngine {
       averageCost: pullRequests.length > 0 ? totalCost / pullRequests.length : 0,
       averageDuration: pullRequests.length > 0 ? totalDuration / pullRequests.length : 0,
       successRate: agentRuns.length > 0 ? (successfulRuns / agentRuns.length) * 100 : 0,
-      lastDelivery
+      lastDelivery,
     };
   }
 
   /**
    * Get cost breakdown over time
    */
-  async getCostOverTime(days: number = 30): Promise<Array<{ date: string; cost: number; tokens: number }>> {
+  async getCostOverTime(
+    days: number = 30
+  ): Promise<Array<{ date: string; cost: number; tokens: number }>> {
     const agentRuns = await database.getAll('agentRuns');
     const now = new Date();
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
@@ -156,23 +161,28 @@ export class AnalyticsEngine {
   /**
    * Get agent performance metrics
    */
-  async getAgentPerformance(): Promise<Array<{
-    role: string;
-    runs: number;
-    successRate: number;
-    averageCost: number;
-    averageDuration: number;
-    averageConfidence: number;
-  }>> {
+  async getAgentPerformance(): Promise<
+    Array<{
+      role: string;
+      runs: number;
+      successRate: number;
+      averageCost: number;
+      averageDuration: number;
+      averageConfidence: number;
+    }>
+  > {
     const agentRuns = await database.getAll('agentRuns');
 
-    const roleMap = new Map<string, {
-      runs: number;
-      successes: number;
-      totalCost: number;
-      totalDuration: number;
-      totalConfidence: number;
-    }>();
+    const roleMap = new Map<
+      string,
+      {
+        runs: number;
+        successes: number;
+        totalCost: number;
+        totalDuration: number;
+        totalConfidence: number;
+      }
+    >();
 
     for (const run of agentRuns) {
       const existing = roleMap.get(run.agentRole) || {
@@ -180,7 +190,7 @@ export class AnalyticsEngine {
         successes: 0,
         totalCost: 0,
         totalDuration: 0,
-        totalConfidence: 0
+        totalConfidence: 0,
       };
 
       existing.runs++;
@@ -192,33 +202,37 @@ export class AnalyticsEngine {
       roleMap.set(run.agentRole, existing);
     }
 
-    return Array.from(roleMap.entries()).map(([role, data]) => ({
-      role,
-      runs: data.runs,
-      successRate: data.runs > 0 ? (data.successes / data.runs) * 100 : 0,
-      averageCost: data.runs > 0 ? data.totalCost / data.runs : 0,
-      averageDuration: data.runs > 0 ? data.totalDuration / data.runs : 0,
-      averageConfidence: data.runs > 0 ? data.totalConfidence / data.runs : 0
-    })).sort((a, b) => b.runs - a.runs);
+    return Array.from(roleMap.entries())
+      .map(([role, data]) => ({
+        role,
+        runs: data.runs,
+        successRate: data.runs > 0 ? (data.successes / data.runs) * 100 : 0,
+        averageCost: data.runs > 0 ? data.totalCost / data.runs : 0,
+        averageDuration: data.runs > 0 ? data.totalDuration / data.runs : 0,
+        averageConfidence: data.runs > 0 ? data.totalConfidence / data.runs : 0,
+      }))
+      .sort((a, b) => b.runs - a.runs);
   }
 
   /**
    * Get recent activity
    */
-  async getRecentActivity(limit: number = 20): Promise<Array<{
-    type: string;
-    description: string;
-    timestamp: string;
-  }>> {
+  async getRecentActivity(limit: number = 20): Promise<
+    Array<{
+      type: string;
+      description: string;
+      timestamp: string;
+    }>
+  > {
     const events = await database.getAll('events');
-    
+
     return events
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit)
-      .map(event => ({
+      .map((event) => ({
         type: event.type,
         description: this.formatEventDescription(event),
-        timestamp: event.timestamp
+        timestamp: event.timestamp,
       }));
   }
 
@@ -230,39 +244,45 @@ export class AnalyticsEngine {
     const costOverTime = await this.getCostOverTime();
     const agentPerformance = await this.getAgentPerformance();
 
-    return JSON.stringify({
-      summary,
-      costOverTime,
-      agentPerformance,
-      exportedAt: new Date().toISOString()
-    }, null, 2);
+    return JSON.stringify(
+      {
+        summary,
+        costOverTime,
+        agentPerformance,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
 
   // --- Private helpers ---
 
   private roleToPhase(role: string): string {
     const mapping: Record<string, string> = {
-      'requirements': 'Requirements',
-      'planner': 'Planning',
-      'developer': 'Implementation',
-      'tester': 'Testing',
-      'reviewer': 'Review',
-      'security': 'Security',
-      'lead': 'Orchestration',
-      'architect': 'Architecture'
+      requirements: 'Requirements',
+      planner: 'Planning',
+      developer: 'Implementation',
+      tester: 'Testing',
+      reviewer: 'Review',
+      security: 'Security',
+      lead: 'Orchestration',
+      architect: 'Architecture',
     };
     return mapping[role] || 'Other';
   }
 
-  private calculateDeliveryTrend(pullRequests: any[]): Array<{ date: string; count: number; cost: number }> {
+  private calculateDeliveryTrend(
+    pullRequests: PullRequestRecord[]
+  ): Array<{ date: string; count: number; cost: number }> {
     const now = new Date();
     const trend: Array<{ date: string; count: number; cost: number }> = [];
 
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateKey = date.toISOString().split('T')[0];
-      
-      const dayPRs = pullRequests.filter(pr => {
+
+      const dayPRs = pullRequests.filter((pr) => {
         const prDate = new Date(pr.createdAt).toISOString().split('T')[0];
         return prDate === dateKey;
       });
@@ -270,14 +290,14 @@ export class AnalyticsEngine {
       trend.push({
         date: dateKey,
         count: dayPRs.length,
-        cost: dayPRs.reduce((sum, pr) => sum + (pr.costReport?.totalCost || 0), 0)
+        cost: dayPRs.reduce((sum, pr) => sum + (pr.costReport?.totalCost || 0), 0),
       });
     }
 
     return trend;
   }
 
-  private formatEventDescription(event: any): string {
+  private formatEventDescription(event: EventRecord): string {
     const { type, data } = event;
 
     switch (type) {

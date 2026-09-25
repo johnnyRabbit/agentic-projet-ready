@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { mockWorkRequests } from '../data/mockData';
-import { 
-  Plus, 
-  Upload, 
-  Link2, 
-  FileText, 
+import {
+  Plus,
+  Upload,
+  Link2,
+  FileText,
   GitBranch,
   ArrowRight,
-  Clock,
   CheckCircle2,
   Loader2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 
 export function WorkRequest() {
@@ -32,7 +31,8 @@ export function WorkRequest() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">New Work Request</h1>
         <p className="text-slate-400 text-sm mt-1">
-          Provide a user story, bug report, feature request, or any work item. The AI team will analyze, plan, and execute.
+          Provide a user story, bug report, feature request, or any work item. The AI team will
+          analyze, plan, and execute.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export function WorkRequest() {
                 { id: 'jira', label: 'Jira', icon: <AlertCircle size={14} /> },
                 { id: 'github', label: 'GitHub', icon: <GitBranch size={14} /> },
                 { id: 'file', label: 'File/PDF', icon: <Upload size={14} /> },
-              ].map(source => (
+              ].map((source) => (
                 <button
                   key={source.id}
                   onClick={() => setInputMode(source.id as typeof inputMode)}
@@ -176,7 +176,7 @@ Acceptance Criteria:
                 <CheckCircle2 size={18} className="text-success" />
                 <h3 className="text-sm font-semibold text-white">Analysis Complete</h3>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="bg-dark-700 rounded-lg p-3">
                   <div className="text-xs text-slate-400">Requirements Found</div>
@@ -214,16 +214,25 @@ Acceptance Criteria:
           <div className="glass-card rounded-xl p-6">
             <h2 className="text-sm font-semibold text-white mb-4">Recent Requests</h2>
             <div className="space-y-3">
-              {mockWorkRequests.map(wr => (
-                <div key={wr.id} className="bg-dark-700 rounded-lg p-3 border border-dark-500 hover:border-indigo-500/20 transition-colors cursor-pointer">
+              {mockWorkRequests.map((wr) => (
+                <div
+                  key={wr.id}
+                  className="bg-dark-700 rounded-lg p-3 border border-dark-500 hover:border-indigo-500/20 transition-colors cursor-pointer"
+                >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`w-2 h-2 rounded-full ${
-                      wr.status === 'implementing' ? 'bg-indigo-400 animate-pulse-glow' :
-                      wr.status === 'review' ? 'bg-purple-400' :
-                      wr.status === 'planning' ? 'bg-warning' :
-                      wr.status === 'intake' ? 'bg-slate-400' :
-                      'bg-success'
-                    }`} />
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        wr.status === 'implementing'
+                          ? 'bg-indigo-400 animate-pulse-glow'
+                          : wr.status === 'review'
+                            ? 'bg-purple-400'
+                            : wr.status === 'planning'
+                              ? 'bg-warning'
+                              : wr.status === 'intake'
+                                ? 'bg-slate-400'
+                                : 'bg-success'
+                      }`}
+                    />
                     <span className="text-xs text-slate-500">{wr.source}</span>
                     <span className="text-xs text-slate-600 ml-auto">{wr.createdAt}</span>
                   </div>

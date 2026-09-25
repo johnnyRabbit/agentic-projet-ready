@@ -1,11 +1,11 @@
-import { 
-  GitHubConfig, 
-  GitHubToken, 
-  GitHubUser, 
-  GitHubRepository, 
+import {
+  GitHubConfig,
+  GitHubToken,
+  GitHubUser,
+  GitHubRepository,
   GitHubPullRequest,
   GitHubWebhook,
-  CreatePullRequestInput
+  CreatePullRequestInput,
 } from './types';
 
 // ============================================================
@@ -13,6 +13,7 @@ import {
 // ============================================================
 
 const GITHUB_API_URL = 'https://api.github.com';
+import type { APIUser, APIRepository, APIPullRequest, APIWebhook } from './apiTypes';
 const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
 
 export class GitHubClient {
@@ -36,7 +37,7 @@ export class GitHubClient {
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
       scope: this.config.scope,
-      state: state || this.generateState()
+      state: state || this.generateState(),
     });
 
     return `${GITHUB_AUTH_URL}?${params.toString()}`;
@@ -49,15 +50,15 @@ export class GitHubClient {
     const response = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
         code,
-        redirect_uri: this.config.redirectUri
-      })
+        redirect_uri: this.config.redirectUri,
+      }),
     });
 
     if (!response.ok) {
@@ -65,13 +66,15 @@ export class GitHubClient {
     }
 
     const data = await response.json();
-    
+
     this.token = {
       accessToken: data.access_token,
       tokenType: data.token_type,
       scope: data.scope,
       refreshToken: data.refresh_token,
-      expiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1000).toISOString() : undefined
+      expiresAt: data.expires_in
+        ? new Date(Date.now() + data.expires_in * 1000).toISOString()
+        : undefined,
     };
 
     this.saveToken();
@@ -108,14 +111,14 @@ export class GitHubClient {
    * Get authenticated user
    */
   async getCurrentUser(): Promise<GitHubUser> {
-    const response = await this.request('/user');
+    const response = await this.request<APIUser>('/user');
     return {
       id: response.id,
       login: response.login,
       name: response.name || response.login,
       email: response.email || '',
       avatarUrl: response.avatar_url,
-      url: response.html_url
+      url: response.html_url,
     };
   }
 
@@ -127,9 +130,11 @@ export class GitHubClient {
    * List user repositories
    */
   async listRepositories(page: number = 1, perPage: number = 30): Promise<GitHubRepository[]> {
-    const response = await this.request(`/user/repos?page=${page}&per_page=${perPage}&sort=updated`);
-    
-    return response.map((repo: any) => ({
+    const response = await this.request<APIRepository[]>(
+      `/user/repos?page=${page}&per_page=${perPage}&sort=updated`
+    );
+
+    return response.map((repo) => ({
       id: repo.id,
       name: repo.name,
       fullName: repo.full_name,
@@ -137,7 +142,7 @@ export class GitHubClient {
       private: repo.private,
       htmlUrl: repo.html_url,
       cloneUrl: repo.clone_url,
-      defaultBranch: repo.default_branch
+      defaultBranch: repo.default_branch,
     }));
   }
 
@@ -145,8 +150,8 @@ export class GitHubClient {
    * Get repository details
    */
   async getRepository(owner: string, repo: string): Promise<GitHubRepository> {
-    const response = await this.request(`/repos/${owner}/${repo}`);
-    
+    const response = await this.request<APIRepository>(`/repos/${owner}/${repo}`);
+
     return {
       id: response.id,
       name: response.name,
@@ -155,7 +160,7 @@ export class GitHubClient {
       private: response.private,
       htmlUrl: response.html_url,
       cloneUrl: response.clone_url,
-      defaultBranch: response.default_branch
+      defaultBranch: response.default_branch,
     };
   }
 
@@ -167,17 +172,20 @@ export class GitHubClient {
    * Create a new pull request
    */
   async createPullRequest(input: CreatePullRequestInput): Promise<GitHubPullRequest> {
-    const response = await this.request(`/repos/${input.owner}/${input.repo}/pulls`, {
-      method: 'POST',
-      body: JSON.stringify({
-        title: input.title,
-        body: input.body,
-        head: input.head,
-        base: input.base,
-        draft: input.draft || false,
-        maintainer_can_modify: input.maintainerCanModify || true
-      })
-    });
+    const response = await this.request<APIPullRequest>(
+      `/repos/${input.owner}/${input.repo}/pulls`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          title: input.title,
+          body: input.body,
+          head: input.head,
+          base: input.base,
+          draft: input.draft || false,
+          maintainer_can_modify: input.maintainerCanModify || true,
+        }),
+      }
+    );
 
     return this.mapPullRequest(response);
   }
@@ -186,19 +194,21 @@ export class GitHubClient {
    * List pull requests
    */
   async listPullRequests(
-    owner: string, 
-    repo: string, 
+    owner: string,
+    repo: string,
     state: 'open' | 'closed' | 'all' = 'open'
   ): Promise<GitHubPullRequest[]> {
-    const response = await this.request(`/repos/${owner}/${repo}/pulls?state=${state}`);
-    return response.map((pr: any) => this.mapPullRequest(pr));
+    const response = await this.request<APIPullRequest[]>(
+      `/repos/${owner}/${repo}/pulls?state=${state}`
+    );
+    return response.map((pr) => this.mapPullRequest(pr));
   }
 
   /**
    * Get pull request details
    */
   async getPullRequest(owner: string, repo: string, number: number): Promise<GitHubPullRequest> {
-    const response = await this.request(`/repos/${owner}/${repo}/pulls/${number}`);
+    const response = await this.request<APIPullRequest>(`/repos/${owner}/${repo}/pulls/${number}`);
     return this.mapPullRequest(response);
   }
 
@@ -206,8 +216,8 @@ export class GitHubClient {
    * Merge a pull request
    */
   async mergePullRequest(
-    owner: string, 
-    repo: string, 
+    owner: string,
+    repo: string,
     number: number,
     commitTitle?: string,
     commitMessage?: string
@@ -217,8 +227,8 @@ export class GitHubClient {
       body: JSON.stringify({
         commit_title: commitTitle,
         commit_message: commitMessage,
-        merge_method: 'squash'
-      })
+        merge_method: 'squash',
+      }),
     });
   }
 
@@ -236,7 +246,7 @@ export class GitHubClient {
     events: string[],
     secret?: string
   ): Promise<GitHubWebhook> {
-    const response = await this.request(`/repos/${owner}/${repo}/hooks`, {
+    const response = await this.request<APIWebhook>(`/repos/${owner}/${repo}/hooks`, {
       method: 'POST',
       body: JSON.stringify({
         name: 'web',
@@ -245,9 +255,9 @@ export class GitHubClient {
         config: {
           url,
           content_type: 'json',
-          secret: secret || this.generateWebhookSecret()
-        }
-      })
+          secret: secret || this.generateWebhookSecret(),
+        },
+      }),
     });
 
     return {
@@ -258,10 +268,10 @@ export class GitHubClient {
       config: {
         url: response.config.url,
         contentType: response.config.content_type,
-        secret: response.config.secret
+        secret: response.config.secret,
       },
       createdAt: response.created_at,
-      updatedAt: response.updated_at
+      updatedAt: response.updated_at,
     };
   }
 
@@ -269,9 +279,9 @@ export class GitHubClient {
    * List webhooks
    */
   async listWebhooks(owner: string, repo: string): Promise<GitHubWebhook[]> {
-    const response = await this.request(`/repos/${owner}/${repo}/hooks`);
-    
-    return response.map((hook: any) => ({
+    const response = await this.request<APIWebhook[]>(`/repos/${owner}/${repo}/hooks`);
+
+    return response.map((hook) => ({
       id: hook.id,
       name: hook.name,
       active: hook.active,
@@ -279,10 +289,10 @@ export class GitHubClient {
       config: {
         url: hook.config.url,
         contentType: hook.config.content_type,
-        secret: hook.config.secret
+        secret: hook.config.secret,
       },
       createdAt: hook.created_at,
-      updatedAt: hook.updated_at
+      updatedAt: hook.updated_at,
     }));
   }
 
@@ -291,7 +301,7 @@ export class GitHubClient {
    */
   async deleteWebhook(owner: string, repo: string, hookId: number): Promise<void> {
     await this.request(`/repos/${owner}/${repo}/hooks/${hookId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -302,31 +312,33 @@ export class GitHubClient {
   /**
    * Make authenticated request to GitHub API
    */
-  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+  private async request<T = void>(endpoint: string, options: RequestInit = {}): Promise<T> {
     if (!this.token) {
       throw new Error('Not authenticated. Please login first.');
     }
 
     const url = endpoint.startsWith('http') ? endpoint : `${GITHUB_API_URL}${endpoint}`;
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        'Authorization': `Bearer ${this.token.accessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: `Bearer ${this.token.accessToken}`,
         'Content-Type': 'application/json',
-        ...options.headers
-      }
+        ...options.headers,
+      },
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        error.message || `GitHub API error: ${response.status} ${response.statusText}`
+      );
     }
 
     // Handle 204 No Content
     if (response.status === 204) {
-      return null;
+      return undefined as T;
     }
 
     return response.json();
@@ -335,7 +347,7 @@ export class GitHubClient {
   /**
    * Map GitHub API response to PullRequest type
    */
-  private mapPullRequest(data: any): GitHubPullRequest {
+  private mapPullRequest(data: APIPullRequest): GitHubPullRequest {
     return {
       id: data.id,
       number: data.number,
@@ -355,8 +367,8 @@ export class GitHubClient {
           private: data.head.repo.private,
           htmlUrl: data.head.repo.html_url,
           cloneUrl: data.head.repo.clone_url,
-          defaultBranch: data.head.repo.default_branch
-        }
+          defaultBranch: data.head.repo.default_branch,
+        },
       },
       base: {
         ref: data.base.ref,
@@ -369,8 +381,8 @@ export class GitHubClient {
           private: data.base.repo.private,
           htmlUrl: data.base.repo.html_url,
           cloneUrl: data.base.repo.clone_url,
-          defaultBranch: data.base.repo.default_branch
-        }
+          defaultBranch: data.base.repo.default_branch,
+        },
       },
       user: {
         id: data.user.id,
@@ -378,7 +390,7 @@ export class GitHubClient {
         name: data.user.name || data.user.login,
         email: '',
         avatarUrl: data.user.avatar_url,
-        url: data.user.html_url
+        url: data.user.html_url,
       },
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -388,7 +400,7 @@ export class GitHubClient {
       commits: data.commits,
       additions: data.additions,
       deletions: data.deletions,
-      changedFiles: data.changed_files
+      changedFiles: data.changed_files,
     };
   }
 
@@ -420,13 +432,17 @@ export class GitHubClient {
    * Generate random state for OAuth
    */
   private generateState(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    );
   }
 
   /**
    * Generate random webhook secret
    */
   private generateWebhookSecret(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    );
   }
 }

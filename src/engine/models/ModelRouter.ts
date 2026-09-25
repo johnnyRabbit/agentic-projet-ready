@@ -50,17 +50,17 @@ export class ModelRouter {
    */
   async execute(request: ModelRequest): Promise<ModelResponse> {
     const decision = this.makeDecision(request);
-    
+
     const provider = this.providers.get(decision.provider);
     if (!provider) {
       throw new Error(`Provider ${decision.provider} not available`);
     }
 
     const response = await provider.execute(request);
-    
+
     // Record performance for future routing decisions
     this.recordPerformance(response, request.taskType);
-    
+
     return response;
   }
 
@@ -80,17 +80,20 @@ export class ModelRouter {
     }
 
     let response = await currentProvider.execute(request);
-    
+
     // Check if confidence is sufficient (simulated via response quality heuristic)
-    while (escalations < decision.escalationPath.length && !this.isConfidenceSufficient(response, confidenceThreshold)) {
+    while (
+      escalations < decision.escalationPath.length &&
+      !this.isConfidenceSufficient(response, confidenceThreshold)
+    ) {
       const nextModel = decision.escalationPath[escalations];
       const nextProvider = this.findProviderForModel(nextModel);
-      
+
       if (!nextProvider) break;
-      
+
       currentProvider = nextProvider;
       escalations++;
-      
+
       // Retry with stronger model
       const escalatedRequest = { ...request, budget: 'premium' as const };
       response = await currentProvider.execute(escalatedRequest);
@@ -108,8 +111,8 @@ export class ModelRouter {
   ): Promise<{ responses: ModelResponse[]; consensus: string }> {
     const allModels = this.getAllAvailableModels();
     const selected = allModels.slice(0, modelCount);
-    
-    const promises = selected.map(async ({ provider, model }) => {
+
+    const promises = selected.map(async ({ provider }) => {
       const p = this.providers.get(provider);
       if (!p) return null;
       return p.execute(request);
@@ -120,7 +123,7 @@ export class ModelRouter {
 
     return {
       responses,
-      consensus: this.findConsensus(responses)
+      consensus: this.findConsensus(responses),
     };
   }
 
@@ -129,7 +132,7 @@ export class ModelRouter {
    */
   private makeDecision(request: ModelRequest): RouterDecision {
     const { taskType, complexity, risk, budget } = request;
-    
+
     // Priority rules (highest to lowest):
     // 1. Risk level → always use strong model for high risk
     // 2. Budget constraints → respect limits
@@ -137,7 +140,7 @@ export class ModelRouter {
     // 4. Complexity → adjust model strength
     // 5. Historical performance → prefer proven models
 
-    let selectedProvider = 'groq';
+    const selectedProvider = 'groq';
     let selectedModel = '';
     let reason = '';
     const alternatives: { model: string; reason: string }[] = [];
@@ -187,7 +190,7 @@ export class ModelRouter {
       model: selectedModel,
       reason,
       alternatives: alternatives.slice(0, 3),
-      escalationPath
+      escalationPath,
     };
   }
 
@@ -203,7 +206,7 @@ export class ModelRouter {
 
   private findProviderForModel(modelId: string): ModelProvider | undefined {
     for (const [, provider] of this.providers) {
-      if (provider.getModels().some(m => m.id === modelId)) {
+      if (provider.getModels().some((m) => m.id === modelId)) {
         return provider;
       }
     }
@@ -212,12 +215,15 @@ export class ModelRouter {
 
   private recordPerformance(response: ModelResponse, taskType: ModelCapability) {
     const existing = this.performanceHistory.find(
-      p => p.model === response.model && p.taskType === taskType
+      (p) => p.model === response.model && p.taskType === taskType
     );
 
     if (existing) {
-      existing.avgLatency = (existing.avgLatency * existing.sampleCount + response.latency) / (existing.sampleCount + 1);
-      existing.avgCost = (existing.avgCost * existing.sampleCount + response.cost) / (existing.sampleCount + 1);
+      existing.avgLatency =
+        (existing.avgLatency * existing.sampleCount + response.latency) /
+        (existing.sampleCount + 1);
+      existing.avgCost =
+        (existing.avgCost * existing.sampleCount + response.cost) / (existing.sampleCount + 1);
       existing.sampleCount++;
     } else {
       this.performanceHistory.push({
@@ -226,16 +232,16 @@ export class ModelRouter {
         avgLatency: response.latency,
         avgCost: response.cost,
         successRate: 1.0,
-        sampleCount: 1
+        sampleCount: 1,
       });
     }
   }
 
-  private isConfidenceSufficient(response: ModelResponse, threshold: number): boolean {
+  private isConfidenceSufficient(response: ModelResponse, _threshold: number): boolean {
     // Heuristic: check response quality indicators
     const content = response.content;
     if (!content || content.length < 50) return false;
-    
+
     // Check for structured output (JSON)
     try {
       JSON.parse(content);
@@ -253,9 +259,9 @@ export class ModelRouter {
   private findConsensus(responses: ModelResponse[]): string {
     if (responses.length === 0) return '';
     if (responses.length === 1) return responses[0].content;
-    
+
     // Simple consensus: return the most detailed response
-    return responses.reduce((best, current) => 
+    return responses.reduce((best, current) =>
       current.content.length > best.content.length ? current : best
     ).content;
   }

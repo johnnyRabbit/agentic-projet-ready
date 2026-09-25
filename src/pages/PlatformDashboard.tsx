@@ -3,25 +3,29 @@ import { database } from '../persistence/Database';
 import { browserFileSystem } from '../filesystem/BrowserFileSystem';
 import { analyticsEngine } from '../analytics/AnalyticsEngine';
 import { webWorkerSandbox } from '../sandbox/WebWorkerSandbox';
-import { 
-  Database as DatabaseIcon, 
-  Folder, 
-  TrendingUp, 
-  Cpu, 
-  Download, 
+import {
+  Database as DatabaseIcon,
+  Folder,
+  TrendingUp,
+  Cpu,
+  Download,
   Upload,
   CheckCircle2,
   XCircle,
   RefreshCw,
   HardDrive,
-  Activity
+  Activity,
 } from 'lucide-react';
 
 export function PlatformDashboard() {
-  const [dbStats, setDbStats] = useState<any>(null);
+  const [dbStats, setDbStats] = useState<Awaited<ReturnType<typeof database.getStats>> | null>(
+    null
+  );
   const [fsAvailable, setFsAvailable] = useState(false);
   const [fsDirName, setFsDirName] = useState<string | null>(null);
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<Awaited<
+    ReturnType<typeof analyticsEngine.getSummary>
+  > | null>(null);
   const [workerReady, setWorkerReady] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -75,7 +79,7 @@ export function PlatformDashboard() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/json';
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -107,7 +111,7 @@ export function PlatformDashboard() {
     await database.clear('agentRuns');
     await database.clear('decisions');
     await database.clear('events');
-    
+
     await loadData();
   };
 
@@ -185,9 +189,7 @@ export function PlatformDashboard() {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Directory:</span>
-              <span className="text-white truncate ml-2">
-                {fsDirName || 'Not selected'}
-              </span>
+              <span className="text-white truncate ml-2">{fsDirName || 'Not selected'}</span>
             </div>
             {!fsDirName && fsAvailable && (
               <button
@@ -302,7 +304,7 @@ export function PlatformDashboard() {
             Top Agents
           </h2>
           <div className="space-y-2">
-            {analytics?.topAgents?.slice(0, 5).map((agent: any, i: number) => (
+            {analytics?.topAgents?.slice(0, 5).map((agent, i) => (
               <div key={i} className="flex items-center gap-3 bg-dark-700 rounded-lg p-3">
                 <div className="flex-1">
                   <div className="text-sm text-white font-medium capitalize">{agent.role}</div>
@@ -322,7 +324,7 @@ export function PlatformDashboard() {
         <div className="glass-card rounded-xl p-6">
           <h2 className="text-sm font-semibold text-white mb-4">Cost by Phase</h2>
           <div className="space-y-3">
-            {analytics.costByPhase.map((item: any, i: number) => (
+            {analytics.costByPhase.map((item, i) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-xs text-slate-400 w-24">{item.phase}</span>
                 <div className="flex-1 h-2 bg-dark-500 rounded-full overflow-hidden">

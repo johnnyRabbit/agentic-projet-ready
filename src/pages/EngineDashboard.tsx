@@ -1,25 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { useEngineStore } from '../store/engineStore';
 import { AgentOutputPanel } from '../components/AgentOutputPanel';
-import { 
-  Play, 
-  Zap, 
-  Cpu, 
-  DollarSign, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  Loader2, 
+import {
+  Play,
+  Zap,
+  Cpu,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
   AlertTriangle,
-  ChevronRight,
   Terminal,
   Settings,
   Activity,
   Brain,
-  Shield,
-  TestTube,
   FileCode,
-  GitBranch
+  GitBranch,
 } from 'lucide-react';
 
 export function EngineDashboard() {
@@ -39,14 +36,14 @@ export function EngineDashboard() {
     modelRouter,
     budgetEngine,
     agentRegistry,
-    currentProjectId
+    currentProjectId,
   } = useEngineStore();
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isInitialized) {
-      initialize().catch(err => console.error('Failed to initialize:', err));
+      initialize().catch((err) => console.error('Failed to initialize:', err));
     }
   }, [isInitialized, initialize]);
 
@@ -59,9 +56,12 @@ export function EngineDashboard() {
 
   const handleExecute = async (type: 'user-story' | 'bug-fix' | 'feature') => {
     const inputs = {
-      'user-story': 'US-124: Smart Charging Timeline\nAs an EV owner, I want to see a 7-day charging schedule so that I can optimize my charging costs based on electricity prices.\n\nAcceptance Criteria:\n- Timeline shows next 7 days with hourly granularity\n- Off-peak hours highlighted in green\n- User can drag to reschedule charging sessions\n- Real-time price updates from smart grid API',
-      'bug-fix': 'BUG-89: Notification badge not updating when new notifications arrive via WebSocket. The badge count stays at 0 even when notifications are received.',
-      'feature': 'FEATURE-42: Add dark mode support to the application. Users should be able to toggle between light and dark themes. The preference should persist across sessions.'
+      'user-story':
+        'US-124: Smart Charging Timeline\nAs an EV owner, I want to see a 7-day charging schedule so that I can optimize my charging costs based on electricity prices.\n\nAcceptance Criteria:\n- Timeline shows next 7 days with hourly granularity\n- Off-peak hours highlighted in green\n- User can drag to reschedule charging sessions\n- Real-time price updates from smart grid API',
+      'bug-fix':
+        'BUG-89: Notification badge not updating when new notifications arrive via WebSocket. The badge count stays at 0 even when notifications are received.',
+      feature:
+        'FEATURE-42: Add dark mode support to the application. Users should be able to toggle between light and dark themes. The preference should persist across sessions.',
     };
     await executeWorkflow(type, inputs[type]);
   };
@@ -88,10 +88,16 @@ export function EngineDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
-            isGroqConnected ? 'bg-success/10 text-success border border-success/20' : 'bg-dark-700 text-slate-400 border border-dark-500'
-          }`}>
-            <div className={`w-2 h-2 rounded-full ${isGroqConnected ? 'bg-success' : 'bg-slate-500'}`} />
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
+              isGroqConnected
+                ? 'bg-success/10 text-success border border-success/20'
+                : 'bg-dark-700 text-slate-400 border border-dark-500'
+            }`}
+          >
+            <div
+              className={`w-2 h-2 rounded-full ${isGroqConnected ? 'bg-success' : 'bg-slate-500'}`}
+            />
             {isGroqConnected ? 'Groq Connected' : 'Simulation Mode'}
           </div>
           <button
@@ -150,7 +156,7 @@ export function EngineDashboard() {
             <span className="text-xs text-slate-400">Avg Latency</span>
           </div>
           <div className="text-xl font-bold text-white">
-            {costRecords.length > 0 
+            {costRecords.length > 0
               ? `${Math.round(costRecords.reduce((s, r) => s + r.latency, 0) / costRecords.length)}ms`
               : '—'}
           </div>
@@ -160,7 +166,9 @@ export function EngineDashboard() {
             <Brain size={14} className="text-pink-400" />
             <span className="text-xs text-slate-400">Models Available</span>
           </div>
-          <div className="text-xl font-bold text-white">{modelRouter.getActiveProviders().length > 0 ? '5' : '0'}</div>
+          <div className="text-xl font-bold text-white">
+            {modelRouter.getActiveProviders().length > 0 ? '5' : '0'}
+          </div>
         </div>
       </div>
 
@@ -182,7 +190,9 @@ export function EngineDashboard() {
                 <FileCode size={18} className="text-indigo-400" />
                 <div>
                   <div className="text-sm text-white font-medium">User Story Delivery</div>
-                  <div className="text-xs text-slate-400">Full pipeline: Requirements → Plan → Code → Test → Review</div>
+                  <div className="text-xs text-slate-400">
+                    Full pipeline: Requirements → Plan → Code → Test → Review
+                  </div>
                 </div>
               </button>
               <button
@@ -193,7 +203,9 @@ export function EngineDashboard() {
                 <AlertTriangle size={18} className="text-warning" />
                 <div>
                   <div className="text-sm text-white font-medium">Bug Fix</div>
-                  <div className="text-xs text-slate-400">Lightweight: Analyze → Fix → Test → Review</div>
+                  <div className="text-xs text-slate-400">
+                    Lightweight: Analyze → Fix → Test → Review
+                  </div>
                 </div>
               </button>
               <button
@@ -214,12 +226,18 @@ export function EngineDashboard() {
           <div className="glass-card rounded-xl p-6">
             <h2 className="text-sm font-semibold text-white mb-4">Agent Registry</h2>
             <div className="space-y-2">
-              {agentRegistry.getAll().map(agent => (
+              {agentRegistry.getAll().map((agent) => (
                 <div key={agent.id} className="flex items-center gap-2 bg-dark-700 rounded p-2.5">
-                  <span className={`w-2 h-2 rounded-full ${
-                    isExecuting && activeWorkflow?.steps.some(s => s.agentRole === agent.role && s.status === 'running')
-                      ? 'bg-success animate-pulse-glow' : 'bg-slate-500'
-                  }`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isExecuting &&
+                      activeWorkflow?.steps.some(
+                        (s) => s.agentRole === agent.role && s.status === 'running'
+                      )
+                        ? 'bg-success animate-pulse-glow'
+                        : 'bg-slate-500'
+                    }`}
+                  />
                   <span className="text-xs text-white font-medium flex-1">{agent.name}</span>
                   <span className="text-xs text-slate-500">{agent.preferredModel}</span>
                 </div>
@@ -231,9 +249,9 @@ export function EngineDashboard() {
           <div className="glass-card rounded-xl p-6">
             <h2 className="text-sm font-semibold text-white mb-4">Model Router</h2>
             <div className="space-y-2">
-              {modelRouter.getActiveProviders().map(provider => {
+              {modelRouter.getActiveProviders().map((provider) => {
                 const p = modelRouter.getProvider(provider);
-                return p?.getModels().map(model => (
+                return p?.getModels().map((model) => (
                   <div key={model.id} className="flex items-center gap-2 bg-dark-700 rounded p-2.5">
                     <Cpu size={12} className="text-indigo-400" />
                     <span className="text-xs text-white flex-1 font-mono">{model.id}</span>
@@ -255,37 +273,59 @@ export function EngineDashboard() {
                   <GitBranch size={16} className="text-indigo-400" />
                   {activeWorkflow.name}
                 </h2>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  activeWorkflow.status === 'complete' ? 'bg-success/20 text-success' :
-                  activeWorkflow.status === 'failed' ? 'bg-danger/20 text-danger' :
-                  activeWorkflow.status === 'running' ? 'bg-indigo-500/20 text-indigo-400' :
-                  'bg-slate-500/20 text-slate-400'
-                }`}>{activeWorkflow.status}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    activeWorkflow.status === 'complete'
+                      ? 'bg-success/20 text-success'
+                      : activeWorkflow.status === 'failed'
+                        ? 'bg-danger/20 text-danger'
+                        : activeWorkflow.status === 'running'
+                          ? 'bg-indigo-500/20 text-indigo-400'
+                          : 'bg-slate-500/20 text-slate-400'
+                  }`}
+                >
+                  {activeWorkflow.status}
+                </span>
               </div>
-              
+
               <div className="space-y-2">
                 {activeWorkflow.steps.map((step, i) => (
-                  <div key={step.id} className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                    step.status === 'running' ? 'bg-indigo-500/5 border-indigo-500/30' :
-                    step.status === 'complete' ? 'bg-success/5 border-success/20' :
-                    step.status === 'failed' ? 'bg-danger/5 border-danger/20' :
-                    'bg-dark-700 border-dark-500'
-                  }`}>
+                  <div
+                    key={step.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                      step.status === 'running'
+                        ? 'bg-indigo-500/5 border-indigo-500/30'
+                        : step.status === 'complete'
+                          ? 'bg-success/5 border-success/20'
+                          : step.status === 'failed'
+                            ? 'bg-danger/5 border-danger/20'
+                            : 'bg-dark-700 border-dark-500'
+                    }`}
+                  >
                     <div className="flex items-center justify-center w-6 h-6 rounded-full bg-dark-600 text-xs font-bold text-slate-400">
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-white font-medium">{step.name}</span>
-                        {step.status === 'running' && <Loader2 size={12} className="animate-spin text-indigo-400" />}
-                        {step.status === 'complete' && <CheckCircle2 size={12} className="text-success" />}
+                        {step.status === 'running' && (
+                          <Loader2 size={12} className="animate-spin text-indigo-400" />
+                        )}
+                        {step.status === 'complete' && (
+                          <CheckCircle2 size={12} className="text-success" />
+                        )}
                         {step.status === 'failed' && <XCircle size={12} className="text-danger" />}
                       </div>
                       <span className="text-xs text-slate-500">{step.agentRole} agent</span>
                     </div>
                     {step.status === 'complete' && step.completedAt && step.startedAt && (
                       <span className="text-xs text-slate-400">
-                        {Math.round((new Date(step.completedAt).getTime() - new Date(step.startedAt).getTime()) / 1000)}s
+                        {Math.round(
+                          (new Date(step.completedAt).getTime() -
+                            new Date(step.startedAt).getTime()) /
+                            1000
+                        )}
+                        s
                       </span>
                     )}
                   </div>
@@ -302,11 +342,14 @@ export function EngineDashboard() {
             </h2>
             <div className="bg-dark-900 rounded-lg p-4 font-mono text-xs max-h-80 overflow-y-auto">
               {executionLog.length === 0 ? (
-                <p className="text-slate-500">No execution yet. Click a workflow button to start.</p>
+                <p className="text-slate-500">
+                  No execution yet. Click a workflow button to start.
+                </p>
               ) : (
                 executionLog.map((log, i) => (
                   <div key={i} className="py-0.5 text-slate-300">
-                    <span className="text-slate-500">[{new Date().toLocaleTimeString()}]</span> {log}
+                    <span className="text-slate-500">[{new Date().toLocaleTimeString()}]</span>{' '}
+                    {log}
                   </div>
                 ))
               )}
@@ -324,32 +367,49 @@ export function EngineDashboard() {
               {completedRuns.length === 0 ? (
                 <p className="text-xs text-slate-500">No runs yet.</p>
               ) : (
-                completedRuns.slice().reverse().map(run => (
-                  <div key={run.id} className="bg-dark-700 rounded-lg p-3 border border-dark-500">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${run.status === 'complete' ? 'bg-success' : 'bg-danger'}`} />
-                      <span className="text-xs text-white font-medium capitalize">{run.agentRole}</span>
-                      <span className="text-xs text-slate-500 ml-auto">€{run.totalCost.toFixed(4)}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      <span>{run.totalTokens} tokens</span>
-                      <span>{run.modelCalls[0]?.model || '—'}</span>
-                      <span>{run.modelCalls[0]?.latency || 0}ms</span>
-                    </div>
-                    {run.confidence && (
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Confidence:</span>
-                        <div className="flex-1 h-1 bg-dark-500 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${
-                            run.confidence > 0.8 ? 'bg-success' :
-                            run.confidence > 0.6 ? 'bg-warning' : 'bg-danger'
-                          }`} style={{ width: `${run.confidence * 100}%` }} />
-                        </div>
-                        <span className="text-xs text-white">{(run.confidence * 100).toFixed(0)}%</span>
+                completedRuns
+                  .slice()
+                  .reverse()
+                  .map((run) => (
+                    <div key={run.id} className="bg-dark-700 rounded-lg p-3 border border-dark-500">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={`w-2 h-2 rounded-full ${run.status === 'complete' ? 'bg-success' : 'bg-danger'}`}
+                        />
+                        <span className="text-xs text-white font-medium capitalize">
+                          {run.agentRole}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-auto">
+                          €{run.totalCost.toFixed(4)}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span>{run.totalTokens} tokens</span>
+                        <span>{run.modelCalls[0]?.model || '—'}</span>
+                        <span>{run.modelCalls[0]?.latency || 0}ms</span>
+                      </div>
+                      {run.confidence && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <span className="text-xs text-slate-500">Confidence:</span>
+                          <div className="flex-1 h-1 bg-dark-500 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                run.confidence > 0.8
+                                  ? 'bg-success'
+                                  : run.confidence > 0.6
+                                    ? 'bg-warning'
+                                    : 'bg-danger'
+                              }`}
+                              style={{ width: `${run.confidence * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-white">
+                            {(run.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))
               )}
             </div>
           </div>
@@ -361,13 +421,18 @@ export function EngineDashboard() {
               <p className="text-xs text-slate-500">No costs recorded yet.</p>
             ) : (
               <div className="space-y-2">
-                {budgetEngine.getCostBreakdown(currentProjectId).map(item => (
+                {budgetEngine.getCostBreakdown(currentProjectId).map((item) => (
                   <div key={item.phase} className="flex items-center gap-3">
                     <span className="text-xs text-slate-400 w-20 capitalize">{item.phase}</span>
                     <div className="flex-1 h-2 bg-dark-500 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${item.percentage}%` }} />
+                      <div
+                        className="h-full bg-indigo-500 rounded-full"
+                        style={{ width: `${item.percentage}%` }}
+                      />
                     </div>
-                    <span className="text-xs text-white w-16 text-right">€{item.cost.toFixed(4)}</span>
+                    <span className="text-xs text-white w-16 text-right">
+                      €{item.cost.toFixed(4)}
+                    </span>
                   </div>
                 ))}
                 <div className="pt-2 border-t border-dark-500 flex justify-between text-xs">

@@ -1,11 +1,21 @@
+interface FileTree {
+  [name: string]: { type: 'file'; path: string } | { type: 'directory'; children: FileTree };
+}
+
 // ============================================================
 // EXECUTION ENGINE — Main Implementation
 // ============================================================
 // Integrates VirtualFileSystem, GitManager, and TestRunner.
 // Provides unified interface for code execution.
 
-import { ExecutionEngine as IExecutionEngine, Worktree, GitCommit, GitStatus, ExecutionResult, TestSuiteResult } from './types';
-import { VirtualFileSystem } from './VirtualFileSystem';
+import {
+  ExecutionEngine as IExecutionEngine,
+  Worktree,
+  GitCommit,
+  GitStatus,
+  ExecutionResult,
+  TestSuiteResult,
+} from './types';
 import { GitManager } from './GitManager';
 import { TestRunner } from './TestRunner';
 
@@ -118,47 +128,64 @@ export class ExecutionEngine implements IExecutionEngine {
 
   // --- Repository ---
 
-  async cloneRepository(url: string, targetPath: string): Promise<Worktree> {
+  async cloneRepository(url: string, _targetPath: string): Promise<Worktree> {
     // Simulate cloning by creating a worktree with basic structure
     const id = `clone-${Date.now()}`;
     const worktree = await this.gitManager.createWorktree(id, 'main', 'main');
-    
+
     const fs = this.gitManager.getFileSystem(id);
     if (fs) {
       // Add some sample files to simulate a cloned repo
-      await fs.writeFile('package.json', JSON.stringify({
-        name: 'cloned-repo',
-        version: '1.0.0',
-        description: `Cloned from ${url}`
-      }, null, 2));
-      
+      await fs.writeFile(
+        'package.json',
+        JSON.stringify(
+          {
+            name: 'cloned-repo',
+            version: '1.0.0',
+            description: `Cloned from ${url}`,
+          },
+          null,
+          2
+        )
+      );
+
       await fs.writeFile('README.md', `# Cloned Repository\n\nSource: ${url}`);
     }
-    
+
     return worktree;
   }
 
   async initializeRepository(name: string): Promise<Worktree> {
     const id = `repo-${Date.now()}`;
     const worktree = await this.gitManager.createWorktree(id, 'main', 'main');
-    
+
     const fs = this.gitManager.getFileSystem(id);
     if (fs) {
-      await fs.writeFile('package.json', JSON.stringify({
-        name,
-        version: '0.1.0',
-        private: true
-      }, null, 2));
-      
+      await fs.writeFile(
+        'package.json',
+        JSON.stringify(
+          {
+            name,
+            version: '0.1.0',
+            private: true,
+          },
+          null,
+          2
+        )
+      );
+
       await fs.writeFile('README.md', `# ${name}\n\nNew repository created by AI Engineering Team`);
-      
-      await fs.writeFile('.gitignore', `node_modules/
+
+      await fs.writeFile(
+        '.gitignore',
+        `node_modules/
 dist/
 .env
 *.log
-`);
+`
+      );
     }
-    
+
     return worktree;
   }
 
@@ -167,14 +194,15 @@ dist/
   /**
    * Get file tree structure
    */
-  async getFileTree(worktreeId: string): Promise<any> {
+  async getFileTree(worktreeId: string): Promise<FileTree> {
     const fs = this.gitManager.getFileSystem(worktreeId);
     if (!fs) {
       throw new Error(`Worktree not found: ${worktreeId}`);
     }
-    
+
     const files = await fs.listFiles();
-    return this.buildTree(files);
+    const directories = new Set(files.filter((path) => fs.getNode(path)?.type === 'directory'));
+    return this.buildTree(files, directories);
   }
 
   /**
@@ -193,28 +221,30 @@ dist/
 
   // --- Private helpers ---
 
-  private buildTree(files: string[]): any {
-    const tree: any = {};
-    
+  private buildTree(files: string[], directories: Set<string>): FileTree {
+    const tree: FileTree = Object.create(null);
+
     for (const file of files) {
       const parts = file.split('/');
       let current = tree;
-      
+
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        if (i === parts.length - 1) {
+        if (i === parts.length - 1 && !directories.has(file)) {
           // File
           current[part] = { type: 'file', path: file };
         } else {
           // Directory
           if (!current[part]) {
-            current[part] = { type: 'directory', children: {} };
+            current[part] = { type: 'directory', children: Object.create(null) };
           }
-          current = current[part].children;
+          const node = current[part];
+          if (node.type !== 'directory') throw new Error(`Not a directory: ${part}`);
+          current = node.children;
         }
       }
     }
-    
+
     return tree;
   }
 }

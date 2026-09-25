@@ -2,7 +2,7 @@
 // CORE TYPES — AI Engineering Team Engine
 // ============================================================
 
-export type AgentRole = 
+export type AgentRole =
   | 'lead'
   | 'requirements'
   | 'planner'
@@ -24,15 +24,11 @@ export type AgentRole =
   | 'api-designer'
   | 'performance-engineer';
 
-export type AgentStatus = 'idle' | 'running' | 'waiting' | 'blocked' | 'complete' | 'failed' | 'escalated';
+export type AgentStatus =
+  'idle' | 'running' | 'waiting' | 'blocked' | 'complete' | 'failed' | 'escalated';
 
-export type ModelCapability = 
-  | 'fast'
-  | 'reasoning'
-  | 'code-generation'
-  | 'code-review'
-  | 'planning'
-  | 'creative';
+export type ModelCapability =
+  'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative';
 
 export interface ModelRequest {
   taskType: ModelCapability;
@@ -128,6 +124,8 @@ export interface AgentArtifact {
 
 export interface Budget {
   id: string;
+  /** Entity constrained by this budget; omitted means a shared limit for its scope. */
+  entityId?: string;
   scope: 'organization' | 'project' | 'task' | 'agent';
   parentId?: string;
   limit: number;
@@ -157,7 +155,8 @@ export interface ContextPack {
   type: 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk';
   content: string;
   source: string;
-  informationType: 'fact' | 'requirement' | 'assumption' | 'inference' | 'decision' | 'recommendation';
+  informationType:
+    'fact' | 'requirement' | 'assumption' | 'inference' | 'decision' | 'recommendation';
   relevance: number;
   tokens: number;
   timestamp: string;
@@ -189,7 +188,17 @@ export interface WorkflowStep {
 
 export interface Risk {
   id: string;
-  category: 'requirements' | 'technical' | 'architecture' | 'security' | 'dependency' | 'integration' | 'schedule' | 'budget' | 'ai' | 'operational';
+  category:
+    | 'requirements'
+    | 'technical'
+    | 'architecture'
+    | 'security'
+    | 'dependency'
+    | 'integration'
+    | 'schedule'
+    | 'budget'
+    | 'ai'
+    | 'operational';
   description: string;
   probability: number;
   impact: number;
@@ -218,8 +227,10 @@ export interface BudgetAlert {
   message: string;
 }
 
-export type ContextType = 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk';
-export type InformationType = 'fact' | 'requirement' | 'assumption' | 'inference' | 'decision' | 'recommendation';
+export type ContextType =
+  'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk';
+export type InformationType =
+  'fact' | 'requirement' | 'assumption' | 'inference' | 'decision' | 'recommendation';
 
 export interface CircuitBreakerState {
   agentId: string;

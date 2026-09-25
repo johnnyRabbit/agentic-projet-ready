@@ -78,13 +78,13 @@ describe('AuditLog', () => {
 
   it('should get entries by time range', () => {
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const _oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     auditLog.log('old', 'resource');
-    
+
     // Wait a bit
     const midTime = new Date();
-    
+
     auditLog.log('new', 'resource');
 
     const entries = auditLog.getByTimeRange(midTime, now);
@@ -98,7 +98,7 @@ describe('AuditLog', () => {
     const exported = auditLog.export();
     expect(exported).toBeDefined();
     expect(typeof exported).toBe('string');
-    
+
     const parsed = JSON.parse(exported);
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed.length).toBe(2);
@@ -128,7 +128,7 @@ describe('AuditLog', () => {
 
   it('should limit entries to maxEntries', () => {
     const auditLogSmall = new AuditLog();
-    (auditLogSmall as any).maxEntries = 10;
+    Reflect.set(auditLogSmall, 'maxEntries', 10);
 
     for (let i = 0; i < 20; i++) {
       auditLogSmall.log('action', 'resource');

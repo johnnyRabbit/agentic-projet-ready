@@ -60,7 +60,7 @@ export class JavaScriptSandbox {
     try {
       // Create a sandboxed function with restricted globals
       const sandbox = this.createSandbox(logs, context);
-      
+
       // Wrap code to capture return value
       const wrappedCode = `
         'use strict';
@@ -74,13 +74,13 @@ export class JavaScriptSandbox {
 
       // Execute with timeout
       const result = await this.executeWithTimeout(wrappedCode, sandbox);
-      
+
       return {
         success: true,
         output: logs.join('\n'),
         returnValue: result,
         duration: Date.now() - startTime,
-        logs
+        logs,
       };
     } catch (error) {
       return {
@@ -88,7 +88,7 @@ export class JavaScriptSandbox {
         output: logs.join('\n'),
         error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
-        logs
+        logs,
       };
     }
   }
@@ -108,7 +108,7 @@ export class JavaScriptSandbox {
       errors.push({
         line: 1,
         message: `Syntax error: ${e instanceof Error ? e.message : String(e)}`,
-        severity: 'error'
+        severity: 'error',
       });
     }
 
@@ -153,7 +153,11 @@ export class JavaScriptSandbox {
         warnings.push({ line: lineNum, message: 'Avoid using eval()', severity: 'warning' });
       }
       if (/console\.log/.test(line)) {
-        warnings.push({ line: lineNum, message: 'Remove console.log before production', severity: 'info' });
+        warnings.push({
+          line: lineNum,
+          message: 'Remove console.log before production',
+          severity: 'info',
+        });
       }
       if (/var\s+/.test(line)) {
         warnings.push({ line: lineNum, message: 'Use let/const instead of var', severity: 'info' });
@@ -177,8 +181,8 @@ export class JavaScriptSandbox {
         classes,
         imports,
         exports,
-        complexity
-      }
+        complexity,
+      },
     };
   }
 
@@ -188,7 +192,7 @@ export class JavaScriptSandbox {
   generateDiff(original: string, modified: string, filename: string = 'file.ts'): string {
     const origLines = original.split('\n');
     const modLines = modified.split('\n');
-    
+
     let diff = `diff --git a/${filename} b/${filename}\n`;
     diff += `--- a/${filename}\n`;
     diff += `+++ b/${filename}\n`;
@@ -196,7 +200,6 @@ export class JavaScriptSandbox {
     // Simple line-by-line diff
     const maxLen = Math.max(origLines.length, modLines.length);
     let inHunk = false;
-    let hunkStart = 0;
 
     for (let i = 0; i < maxLen; i++) {
       const origLine = origLines[i];
@@ -229,10 +232,10 @@ export class JavaScriptSandbox {
   private createSandbox(logs: string[], context: Record<string, unknown>): Record<string, unknown> {
     return {
       console: {
-        log: (...args: unknown[]) => logs.push(args.map(a => String(a)).join(' ')),
-        error: (...args: unknown[]) => logs.push(`ERROR: ${args.map(a => String(a)).join(' ')}`),
-        warn: (...args: unknown[]) => logs.push(`WARN: ${args.map(a => String(a)).join(' ')}`),
-        info: (...args: unknown[]) => logs.push(`INFO: ${args.map(a => String(a)).join(' ')}`)
+        log: (...args: unknown[]) => logs.push(args.map((a) => String(a)).join(' ')),
+        error: (...args: unknown[]) => logs.push(`ERROR: ${args.map((a) => String(a)).join(' ')}`),
+        warn: (...args: unknown[]) => logs.push(`WARN: ${args.map((a) => String(a)).join(' ')}`),
+        info: (...args: unknown[]) => logs.push(`INFO: ${args.map((a) => String(a)).join(' ')}`),
       },
       setTimeout: (fn: () => void, ms: number) => {
         if (ms > this.timeoutMs) throw new Error('Timeout too long');
@@ -251,11 +254,14 @@ export class JavaScriptSandbox {
       Map,
       Set,
       Promise,
-      ...context
+      ...context,
     };
   }
 
-  private async executeWithTimeout(code: string, sandbox: Record<string, unknown>): Promise<unknown> {
+  private async executeWithTimeout(
+    code: string,
+    sandbox: Record<string, unknown>
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error(`Execution timeout (${this.timeoutMs}ms)`));

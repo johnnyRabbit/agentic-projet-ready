@@ -1,4 +1,4 @@
-import { Workflow, WorkflowStep, AgentRole } from '../types';
+import { Workflow } from '../types';
 
 // ============================================================
 // WORKFLOW ENGINE — Predefined Delivery Workflows
@@ -17,7 +17,8 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         name: 'Requirements Analysis',
         agentRole: 'requirements',
         status: 'pending',
-        input: 'Analyze the user story and extract requirements, acceptance criteria, and ambiguities.'
+        input:
+          'Analyze the user story and extract requirements, acceptance criteria, and ambiguities.',
       },
       {
         id: 'step-risk',
@@ -25,7 +26,7 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'risk',
         status: 'pending',
         dependsOn: ['step-requirements'],
-        input: 'Based on the requirements, identify technical and project risks.'
+        input: 'Based on the requirements, identify technical and project risks.',
       },
       {
         id: 'step-planning',
@@ -33,7 +34,7 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'planner',
         status: 'pending',
         dependsOn: ['step-requirements'],
-        input: 'Create a detailed implementation plan with tasks, estimates, and team composition.'
+        input: 'Create a detailed implementation plan with tasks, estimates, and team composition.',
       },
       {
         id: 'step-development',
@@ -41,7 +42,7 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'developer',
         status: 'pending',
         dependsOn: ['step-planning'],
-        input: 'Implement the feature based on the plan and requirements.'
+        input: 'Implement the feature based on the plan and requirements.',
       },
       {
         id: 'step-testing',
@@ -49,7 +50,7 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'tester',
         status: 'pending',
         dependsOn: ['step-development'],
-        input: 'Write and execute tests for the implementation.'
+        input: 'Write and execute tests for the implementation.',
       },
       {
         id: 'step-review',
@@ -57,7 +58,8 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'reviewer',
         status: 'pending',
         dependsOn: ['step-development', 'step-testing'],
-        input: 'Review the implementation and tests for correctness, security, and maintainability.'
+        input:
+          'Review the implementation and tests for correctness, security, and maintainability.',
       },
       {
         id: 'step-security',
@@ -65,9 +67,9 @@ export function createUserStoryWorkflow(projectId: string): Workflow {
         agentRole: 'security',
         status: 'pending',
         dependsOn: ['step-development'],
-        input: 'Perform security review of the implementation.'
-      }
-    ]
+        input: 'Perform security review of the implementation.',
+      },
+    ],
   };
 }
 
@@ -84,7 +86,7 @@ export function createBugFixWorkflow(projectId: string): Workflow {
         name: 'Bug Analysis',
         agentRole: 'requirements',
         status: 'pending',
-        input: 'Analyze the bug report, reproduce steps, and identify root cause.'
+        input: 'Analyze the bug report, reproduce steps, and identify root cause.',
       },
       {
         id: 'step-fix',
@@ -92,7 +94,7 @@ export function createBugFixWorkflow(projectId: string): Workflow {
         agentRole: 'developer',
         status: 'pending',
         dependsOn: ['step-analyze'],
-        input: 'Implement the fix based on the analysis.'
+        input: 'Implement the fix based on the analysis.',
       },
       {
         id: 'step-test',
@@ -100,7 +102,7 @@ export function createBugFixWorkflow(projectId: string): Workflow {
         agentRole: 'tester',
         status: 'pending',
         dependsOn: ['step-fix'],
-        input: 'Write regression tests and verify the fix.'
+        input: 'Write regression tests and verify the fix.',
       },
       {
         id: 'step-review',
@@ -108,9 +110,9 @@ export function createBugFixWorkflow(projectId: string): Workflow {
         agentRole: 'reviewer',
         status: 'pending',
         dependsOn: ['step-fix', 'step-test'],
-        input: 'Review the bug fix for correctness and completeness.'
-      }
-    ]
+        input: 'Review the bug fix for correctness and completeness.',
+      },
+    ],
   };
 }
 
@@ -127,7 +129,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         name: 'Requirements Analysis',
         agentRole: 'requirements',
         status: 'pending',
-        input: 'Analyze the feature request and extract detailed requirements.'
+        input: 'Analyze the feature request and extract detailed requirements.',
       },
       {
         id: 'step-architecture',
@@ -135,7 +137,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'architect',
         status: 'pending',
         dependsOn: ['step-requirements'],
-        input: 'Design the architecture for this feature considering existing system.'
+        input: 'Design the architecture for this feature considering existing system.',
       },
       {
         id: 'step-risk',
@@ -143,7 +145,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'risk',
         status: 'pending',
         dependsOn: ['step-architecture'],
-        input: 'Assess risks for the proposed architecture and implementation.'
+        input: 'Assess risks for the proposed architecture and implementation.',
       },
       {
         id: 'step-planning',
@@ -151,7 +153,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'planner',
         status: 'pending',
         dependsOn: ['step-architecture'],
-        input: 'Create implementation plan based on architecture decisions.'
+        input: 'Create implementation plan based on architecture decisions.',
       },
       {
         id: 'step-development',
@@ -159,7 +161,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'developer',
         status: 'pending',
         dependsOn: ['step-planning'],
-        input: 'Implement the feature following the plan and architecture.'
+        input: 'Implement the feature following the plan and architecture.',
       },
       {
         id: 'step-testing',
@@ -167,7 +169,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'tester',
         status: 'pending',
         dependsOn: ['step-development'],
-        input: 'Write comprehensive tests for the feature.'
+        input: 'Write comprehensive tests for the feature.',
       },
       {
         id: 'step-review',
@@ -175,7 +177,7 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'reviewer',
         status: 'pending',
         dependsOn: ['step-development', 'step-testing'],
-        input: 'Review the implementation for quality and correctness.'
+        input: 'Review the implementation for quality and correctness.',
       },
       {
         id: 'step-security',
@@ -183,16 +185,22 @@ export function createFeatureWorkflow(projectId: string): Workflow {
         agentRole: 'security',
         status: 'pending',
         dependsOn: ['step-development'],
-        input: 'Security audit of the feature implementation.'
-      }
-    ]
+        input: 'Security audit of the feature implementation.',
+      },
+    ],
   };
 }
 
-export function getWorkflowForType(type: 'user-story' | 'bug-fix' | 'feature', projectId: string): Workflow {
+export function getWorkflowForType(
+  type: 'user-story' | 'bug-fix' | 'feature',
+  projectId: string
+): Workflow {
   switch (type) {
-    case 'user-story': return createUserStoryWorkflow(projectId);
-    case 'bug-fix': return createBugFixWorkflow(projectId);
-    case 'feature': return createFeatureWorkflow(projectId);
+    case 'user-story':
+      return createUserStoryWorkflow(projectId);
+    case 'bug-fix':
+      return createBugFixWorkflow(projectId);
+    case 'feature':
+      return createFeatureWorkflow(projectId);
   }
 }

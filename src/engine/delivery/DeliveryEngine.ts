@@ -9,7 +9,14 @@ import { PipelineRunner, PipelineResult } from './PipelineRunner';
 import { TraceabilityEngine } from './TraceabilityEngine';
 import { DisagreementResolver, Disagreement } from './DisagreementResolver';
 import { PullRequestGenerator } from '../github/PullRequestGenerator';
-import { PullRequest, GitHubCommit, FileChange, CostReport, DecisionRecord, RiskRecord, TraceabilityLink } from '../github/types';
+import {
+  PullRequest,
+  GitHubCommit,
+  FileChange,
+  CostReport,
+  DecisionRecord,
+  TraceabilityLink,
+} from '../github/types';
 
 export interface DeliveryInput {
   userStory: string;
@@ -75,7 +82,7 @@ export class DeliveryEngine {
         id: reqId,
         type: 'requirement',
         title: input.requirements[0] || 'Requirement',
-        content: input.requirements.join('\n')
+        content: input.requirements.join('\n'),
       });
 
       this.traceability.addNode({
@@ -83,14 +90,14 @@ export class DeliveryEngine {
         type: 'user-story',
         title: input.userStory.substring(0, 100),
         content: input.userStory,
-        parent: reqId
+        parent: reqId,
       });
 
       this.traceability.addNode({
         id: taskId,
         type: 'task',
         title: 'Implement feature',
-        parent: usId
+        parent: usId,
       });
 
       // Step 4: Run CI/CD pipeline
@@ -102,14 +109,18 @@ export class DeliveryEngine {
 
       // Step 5: Commit changes
       const commitMessage = `feat: implement ${input.userStory.substring(0, 50)}`;
-      const commit = await this.executionEngine.commit(worktreeId, commitMessage, 'AI Developer Agent');
+      const commit = await this.executionEngine.commit(
+        worktreeId,
+        commitMessage,
+        'AI Developer Agent'
+      );
 
       // Add commit to traceability
       this.traceability.addNode({
         id: commit.hash,
         type: 'commit',
         title: commit.message,
-        parent: taskId
+        parent: taskId,
       });
 
       // Step 6: Generate file changes
@@ -119,13 +130,13 @@ export class DeliveryEngine {
       for (const file of files) {
         const content = await this.executionEngine.readFile(worktreeId, file);
         const lines = content.split('\n').length;
-        
+
         fileChanges.push({
           path: file,
           status: 'added',
           additions: lines,
           deletions: 0,
-          patch: this.generatePatch(content)
+          patch: this.generatePatch(content),
         });
 
         // Add file to traceability
@@ -133,7 +144,7 @@ export class DeliveryEngine {
           id: file,
           type: 'file',
           title: file,
-          parent: commit.hash
+          parent: commit.hash,
         });
       }
 
@@ -144,7 +155,7 @@ export class DeliveryEngine {
         task: taskId,
         commit: commit.hash,
         test: `TEST-${Math.floor(Math.random() * 1000)}`,
-        pr: `PR-${this.prGenerator['prCounter']}`
+        pr: `PR-${this.prGenerator['prCounter']}`,
       };
       traceabilityLinks.push(traceLink);
       this.traceability.createLink(traceLink);
@@ -163,15 +174,15 @@ export class DeliveryEngine {
         author: {
           name: commit.author,
           email: 'ai-team@example.com',
-          date: commit.timestamp
+          date: commit.timestamp,
         },
         url: `https://github.com/example/repo/commit/${commit.hash}`,
         files: fileChanges,
         stats: {
           additions: fileChanges.reduce((sum, f) => sum + f.additions, 0),
           deletions: 0,
-          files: fileChanges.length
-        }
+          files: fileChanges.length,
+        },
       };
 
       const pullRequest = this.prGenerator.generate({
@@ -187,7 +198,7 @@ export class DeliveryEngine {
         traceability: traceabilityLinks,
         decisions,
         risks: [],
-        costReport
+        costReport,
       });
 
       return {
@@ -199,9 +210,8 @@ export class DeliveryEngine {
         disagreements: this.disagreementResolver.getAll(),
         costReport,
         errors,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
-
     } catch (error) {
       return {
         success: false,
@@ -210,7 +220,7 @@ export class DeliveryEngine {
         disagreements: this.disagreementResolver.getAll(),
         costReport: this.generateCostReport(input.code, undefined),
         errors: [error instanceof Error ? error.message : String(error)],
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
   }
@@ -234,8 +244,8 @@ export class DeliveryEngine {
   private generatePatch(content: string): string {
     const lines = content.split('\n');
     let patch = '';
-    
-    lines.forEach((line, i) => {
+
+    lines.forEach((line) => {
       patch += `+${line}\n`;
     });
 
@@ -253,7 +263,7 @@ export class DeliveryEngine {
       { phase: 'Implementation', cost: totalCost * 0.4, tokens: totalTokens * 0.4 },
       { phase: 'Testing', cost: totalCost * 0.15, tokens: totalTokens * 0.15 },
       { phase: 'Review', cost: totalCost * 0.1, tokens: totalTokens * 0.1 },
-      { phase: 'Pipeline', cost: totalCost * 0.1, tokens: totalTokens * 0.1 }
+      { phase: 'Pipeline', cost: totalCost * 0.1, tokens: totalTokens * 0.1 },
     ];
 
     const estimatedHumanHours = Math.ceil(totalLines / 50); // ~50 lines per hour
@@ -265,11 +275,11 @@ export class DeliveryEngine {
       breakdown,
       estimatedHumanEffort: `${estimatedHumanHours}h`,
       agentDuration: `${agentMinutes}m`,
-      savings: `${estimatedHumanHours}h → ${agentMinutes}m`
+      savings: `${estimatedHumanHours}h → ${agentMinutes}m`,
     };
   }
 
-  private generateDecision(input: DeliveryInput): DecisionRecord {
+  private generateDecision(_input: DeliveryInput): DecisionRecord {
     return {
       id: `decision-${Date.now()}`,
       title: 'Implementation approach',
@@ -277,12 +287,12 @@ export class DeliveryEngine {
       options: [
         { agent: 'Developer Agent', position: 'Use existing patterns and libraries' },
         { agent: 'Architect Agent', position: 'Create custom solution for better control' },
-        { agent: 'Critic Agent', position: 'Use existing patterns — simpler and proven' }
+        { agent: 'Critic Agent', position: 'Use existing patterns — simpler and proven' },
       ],
       finalDecision: 'Use existing patterns and libraries for simplicity and maintainability',
       confidence: 0.85,
       decidedBy: 'agent',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }

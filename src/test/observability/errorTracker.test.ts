@@ -50,7 +50,7 @@ describe('ErrorTracker', () => {
 
   it('should resolve error', () => {
     const error = errorTracker.track(new Error('Test error'));
-    
+
     errorTracker.resolve(error.id);
 
     const errors = errorTracker.getAll();
@@ -126,7 +126,7 @@ describe('ErrorTracker', () => {
     const exported = errorTracker.export();
     expect(exported).toBeDefined();
     expect(typeof exported).toBe('string');
-    
+
     const parsed = JSON.parse(exported);
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed.length).toBe(2);
@@ -134,7 +134,7 @@ describe('ErrorTracker', () => {
 
   it('should limit errors to maxErrors', () => {
     const trackerSmall = new ErrorTracker();
-    (trackerSmall as any).maxErrors = 10;
+    Reflect.set(trackerSmall, 'maxErrors', 10);
 
     for (let i = 0; i < 20; i++) {
       trackerSmall.track(new Error(`Error ${i}`));

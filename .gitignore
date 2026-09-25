@@ -2,4 +2,10 @@ node_modules/
 .next/
 dist/
 build/
+coverage/
 *.log
+
+# Local environment files; keep only the example versioned.
+.env
+.env.*
+!.env.example

@@ -1,13 +1,13 @@
+import { logger } from '../utils/logger';
 import { create } from 'zustand';
 import { GitHubClient } from '../engine/github/GitHubClient';
 import { WebhookHandler, WEBHOOK_EVENTS } from '../engine/github/WebhookHandler';
-import { 
-  GitHubConfig, 
-  GitHubUser, 
-  GitHubRepository, 
+import {
+  GitHubConfig,
+  GitHubUser,
+  GitHubRepository,
   GitHubPullRequest,
   GitHubWebhook,
-  GitHubWebhookPayload
 } from '../engine/github/types';
 
 // ============================================================
@@ -19,19 +19,19 @@ interface GitHubState {
   config: GitHubConfig | null;
   client: GitHubClient | null;
   webhookHandler: WebhookHandler | null;
-  
+
   // Authentication
   isAuthenticated: boolean;
   user: GitHubUser | null;
   loading: boolean;
   error: string | null;
-  
+
   // Data
   repositories: GitHubRepository[];
   selectedRepository: GitHubRepository | null;
   pullRequests: GitHubPullRequest[];
   webhooks: GitHubWebhook[];
-  
+
   // Actions
   initialize: (config: GitHubConfig) => void;
   login: () => void;
@@ -73,27 +73,27 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
   initialize: (config: GitHubConfig) => {
     const client = new GitHubClient(config);
     const webhookHandler = new WebhookHandler(config.clientSecret);
-    
+
     // Register default webhook handlers
     webhookHandler.on(WEBHOOK_EVENTS.PULL_REQUEST_OPENED, async (payload) => {
-      console.log('PR opened:', payload.pullRequest?.title);
+      logger.debug('PR opened', { title: payload.pullRequest?.title });
       // Trigger delivery pipeline
     });
 
     webhookHandler.on(WEBHOOK_EVENTS.PULL_REQUEST_CLOSED, async (payload) => {
-      console.log('PR closed:', payload.pullRequest?.title);
+      logger.debug('PR closed', { title: payload.pullRequest?.title });
     });
 
     webhookHandler.on(WEBHOOK_EVENTS.ISSUES_OPENED, async (payload) => {
-      console.log('Issue opened:', payload.issue?.title);
+      logger.debug('Issue opened', { title: payload.issue?.title });
       // Auto-analyze issue
     });
 
-    set({ 
-      config, 
-      client, 
+    set({
+      config,
+      client,
       webhookHandler,
-      isAuthenticated: client.isAuthenticated()
+      isAuthenticated: client.isAuthenticated(),
     });
 
     // Load user if already authenticated
@@ -126,13 +126,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
     try {
       await client.exchangeCodeForToken(code);
       set({ isAuthenticated: true });
-      
+
       await get().loadUser();
       await get().loadRepositories();
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Authentication failed',
-        isAuthenticated: false 
+        isAuthenticated: false,
       });
     } finally {
       set({ loading: false });
@@ -151,7 +151,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
       repositories: [],
       selectedRepository: null,
       pullRequests: [],
-      webhooks: []
+      webhooks: [],
     });
   },
 
@@ -166,9 +166,9 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
       const user = await client.getCurrentUser();
       set({ user, isAuthenticated: true });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to load user',
-        isAuthenticated: false 
+        isAuthenticated: false,
       });
     } finally {
       set({ loading: false });
@@ -186,8 +186,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
       const repositories = await client.listRepositories();
       set({ repositories });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to load repositories'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load repositories',
       });
     } finally {
       set({ loading: false });
@@ -197,7 +197,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
   // Select repository
   selectRepository: (repo: GitHubRepository | null) => {
     set({ selectedRepository: repo });
-    
+
     if (repo) {
       get().loadPullRequests();
       get().loadWebhooks();
@@ -221,8 +221,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
       );
       set({ pullRequests });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to load pull requests'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load pull requests',
       });
     } finally {
       set({ loading: false });
@@ -246,7 +246,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
         body,
         head,
         base,
-        draft
+        draft,
       });
 
       // Reload pull requests
@@ -254,8 +254,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
       return pr;
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to create pull request'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to create pull request',
       });
       throw error;
     } finally {
@@ -273,17 +273,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      await client.mergePullRequest(
-        selectedRepository.owner,
-        selectedRepository.name,
-        number
-      );
+      await client.mergePullRequest(selectedRepository.owner, selectedRepository.name, number);
 
       // Reload pull requests
       await get().loadPullRequests();
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to merge pull request'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to merge pull request',
       });
       throw error;
     } finally {
@@ -299,14 +295,11 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const webhooks = await client.listWebhooks(
-        selectedRepository.owner,
-        selectedRepository.name
-      );
+      const webhooks = await client.listWebhooks(selectedRepository.owner, selectedRepository.name);
       set({ webhooks });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to load webhooks'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load webhooks',
       });
     } finally {
       set({ loading: false });
@@ -334,8 +327,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
       // Reload webhooks
       await get().loadWebhooks();
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to create webhook'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to create webhook',
       });
       throw error;
     } finally {
@@ -353,17 +346,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      await client.deleteWebhook(
-        selectedRepository.owner,
-        selectedRepository.name,
-        hookId
-      );
+      await client.deleteWebhook(selectedRepository.owner, selectedRepository.name, hookId);
 
       // Reload webhooks
       await get().loadWebhooks();
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete webhook'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to delete webhook',
       });
       throw error;
     } finally {
@@ -379,9 +368,9 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
     }
 
     const result = await webhookHandler.handleWebhook(event, signature, payload);
-    
+
     if (!result.success) {
       throw new Error(result.error);
     }
-  }
+  },
 }));

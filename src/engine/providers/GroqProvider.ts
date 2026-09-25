@@ -1,4 +1,5 @@
-import { ModelProvider, ModelRequest, ModelResponse, ModelInfo, ChatMessage } from '../types';
+import { logger } from '../../utils/logger';
+import { ModelProvider, ModelRequest, ModelResponse, ModelInfo } from '../types';
 
 // ============================================================
 // GROQ PROVIDER — Real API Integration
@@ -12,7 +13,7 @@ const GROQ_MODELS: ModelInfo[] = [
     inputCostPer1k: 0.00005,
     outputCostPer1k: 0.00008,
     maxContext: 131072,
-    speed: 'fast'
+    speed: 'fast',
   },
   {
     id: 'llama-3.3-70b-versatile',
@@ -21,7 +22,7 @@ const GROQ_MODELS: ModelInfo[] = [
     inputCostPer1k: 0.00059,
     outputCostPer1k: 0.00079,
     maxContext: 131072,
-    speed: 'medium'
+    speed: 'medium',
   },
   {
     id: 'llama-3.1-70b-versatile',
@@ -30,7 +31,7 @@ const GROQ_MODELS: ModelInfo[] = [
     inputCostPer1k: 0.00059,
     outputCostPer1k: 0.00079,
     maxContext: 131072,
-    speed: 'medium'
+    speed: 'medium',
   },
   {
     id: 'gemma2-9b-it',
@@ -39,7 +40,7 @@ const GROQ_MODELS: ModelInfo[] = [
     inputCostPer1k: 0.00002,
     outputCostPer1k: 0.00002,
     maxContext: 8192,
-    speed: 'fast'
+    speed: 'fast',
   },
   {
     id: 'mixtral-8x7b-32768',
@@ -48,8 +49,8 @@ const GROQ_MODELS: ModelInfo[] = [
     inputCostPer1k: 0.00024,
     outputCostPer1k: 0.00024,
     maxContext: 32768,
-    speed: 'fast'
-  }
+    speed: 'fast',
+  },
 ];
 
 export class GroqProvider implements ModelProvider {
@@ -73,7 +74,7 @@ export class GroqProvider implements ModelProvider {
     if (!this.apiKey) return false;
     try {
       const response = await fetch(`${this.baseUrl}/models`, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+        headers: { Authorization: `Bearer ${this.apiKey}` },
       });
       return response.ok;
     } catch {
@@ -84,53 +85,53 @@ export class GroqProvider implements ModelProvider {
   async execute(request: ModelRequest): Promise<ModelResponse> {
     const startTime = Date.now();
     const model = this.selectModel(request);
-    
+
     if (!this.apiKey) {
       // Simulation mode — return realistic mock response
-      console.log('[GroqProvider] No API key, using simulation mode');
+      logger.debug('[GroqProvider] No API key, using simulation mode');
       return this.simulateResponse(request, model, startTime);
     }
 
     try {
-      console.log(`[GroqProvider] Executing request with model: ${model.id}`);
-      
+      logger.debug(`[GroqProvider] Executing request with model: ${model.id}`);
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model: model.id,
-          messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+          messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
           max_tokens: request.maxTokens || 4096,
           temperature: request.temperature ?? 0.3,
-          stream: false
-        })
+          stream: false,
+        }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage = `Groq API error: ${response.status}`;
-        
+
         try {
           const errorJson = JSON.parse(errorText);
           errorMessage += ` - ${errorJson.error?.message || errorText}`;
         } catch {
           errorMessage += ` - ${errorText}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       const latency = Date.now() - startTime;
-      
+
       const inputTokens = data.usage?.prompt_tokens || 0;
       const outputTokens = data.usage?.completion_tokens || 0;
       const cost = this.calculateCost(model, inputTokens, outputTokens);
 
-      console.log(`[GroqProvider] Request completed in ${latency}ms, cost: $${cost.toFixed(6)}`);
+      logger.debug(`[GroqProvider] Request completed in ${latency}ms, cost: $${cost.toFixed(6)}`);
 
       return {
         content: data.choices[0]?.message?.content || '',
@@ -142,7 +143,7 @@ export class GroqProvider implements ModelProvider {
         latency,
         cost,
         timestamp: new Date().toISOString(),
-        finishReason: data.choices[0]?.finish_reason || 'stop'
+        finishReason: data.choices[0]?.finish_reason || 'stop',
       };
     } catch (error) {
       // Fallback to simulation on error
@@ -156,19 +157,19 @@ export class GroqProvider implements ModelProvider {
     const { taskType, complexity, risk, budget } = request;
 
     if (budget === 'minimal' || taskType === 'fast') {
-      return GROQ_MODELS.find(m => m.id === 'llama-3.1-8b-instant')!;
+      return GROQ_MODELS[0];
     }
 
     if (complexity === 'high' || risk === 'high') {
-      return GROQ_MODELS.find(m => m.id === 'llama-3.3-70b-versatile')!;
+      return GROQ_MODELS[1];
     }
 
     if (taskType === 'code-generation' || taskType === 'code-review') {
-      return GROQ_MODELS.find(m => m.id === 'llama-3.3-70b-versatile')!;
+      return GROQ_MODELS[1];
     }
 
     // Default: balanced model
-    return GROQ_MODELS.find(m => m.id === 'llama-3.3-70b-versatile')!;
+    return GROQ_MODELS[1];
   }
 
   private calculateCost(model: ModelInfo, inputTokens: number, outputTokens: number): number {
@@ -177,10 +178,17 @@ export class GroqProvider implements ModelProvider {
     return Math.round((inputCost + outputCost) * 10000) / 10000;
   }
 
-  private simulateResponse(request: ModelRequest, model: ModelInfo, startTime: number): ModelResponse {
+  private simulateResponse(
+    request: ModelRequest,
+    model: ModelInfo,
+    _startTime: number
+  ): ModelResponse {
     // Realistic simulation based on agent role and task
     const content = this.generateSimulatedContent(request);
-    const inputTokens = request.messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+    const inputTokens = request.messages.reduce(
+      (sum, m) => sum + Math.ceil(m.content.length / 4),
+      0
+    );
     const outputTokens = Math.ceil(content.length / 4);
     const latency = Math.floor(Math.random() * 800) + 200 + (model.speed === 'fast' ? 0 : 500);
     const cost = this.calculateCost(model, inputTokens, outputTokens);
@@ -195,45 +203,70 @@ export class GroqProvider implements ModelProvider {
       latency,
       cost,
       timestamp: new Date().toISOString(),
-      finishReason: 'stop'
+      finishReason: 'stop',
     };
   }
 
   private generateSimulatedContent(request: ModelRequest): string {
-    const { taskType, agentId } = request;
-    
+    const { taskType } = request;
+
     const responses: Record<string, string> = {
-      'requirements': JSON.stringify({
-        requirements: [
-          { id: 'REQ-001', text: 'User can view charging timeline for next 7 days', priority: 'high' },
-          { id: 'REQ-002', text: 'System schedules charging during off-peak hours', priority: 'high' },
-          { id: 'REQ-003', text: 'User can override scheduled times', priority: 'medium' },
-          { id: 'REQ-004', text: 'Real-time price updates from grid API', priority: 'medium' },
-          { id: 'REQ-005', text: 'Notifications for charging events', priority: 'low' },
-          { id: 'REQ-006', text: 'Cost breakdown in charging history', priority: 'low' }
-        ],
-        ambiguities: [
-          'Connectivity loss behavior not specified',
-          'Recurring schedule support unclear'
-        ],
-        assumptions: [
-          'Single user per device',
-          'Grid API supports WebSocket'
-        ]
-      }, null, 2),
-      
-      'planning': JSON.stringify({
-        phases: [
-          { name: 'Foundation', tasks: ['DB schema', 'API endpoints', 'State machine base'], estimate: '3h' },
-          { name: 'Core Features', tasks: ['Timeline UI', 'Real-time updates', 'Scheduling logic'], estimate: '5h' },
-          { name: 'Integration', tasks: ['Grid API', 'WebSocket', 'Error handling'], estimate: '3h' },
-          { name: 'Quality', tasks: ['Tests', 'Security review', 'Performance'], estimate: '2h' }
-        ],
-        totalEstimate: { optimistic: '10h', expected: '13h', pessimistic: '18h' },
-        confidence: 0.73,
-        teamComposition: ['Lead', 'Mobile Dev', 'Backend Dev', 'QA', 'Reviewer']
-      }, null, 2),
-      
+      requirements: JSON.stringify(
+        {
+          requirements: [
+            {
+              id: 'REQ-001',
+              text: 'User can view charging timeline for next 7 days',
+              priority: 'high',
+            },
+            {
+              id: 'REQ-002',
+              text: 'System schedules charging during off-peak hours',
+              priority: 'high',
+            },
+            { id: 'REQ-003', text: 'User can override scheduled times', priority: 'medium' },
+            { id: 'REQ-004', text: 'Real-time price updates from grid API', priority: 'medium' },
+            { id: 'REQ-005', text: 'Notifications for charging events', priority: 'low' },
+            { id: 'REQ-006', text: 'Cost breakdown in charging history', priority: 'low' },
+          ],
+          ambiguities: [
+            'Connectivity loss behavior not specified',
+            'Recurring schedule support unclear',
+          ],
+          assumptions: ['Single user per device', 'Grid API supports WebSocket'],
+        },
+        null,
+        2
+      ),
+
+      planning: JSON.stringify(
+        {
+          phases: [
+            {
+              name: 'Foundation',
+              tasks: ['DB schema', 'API endpoints', 'State machine base'],
+              estimate: '3h',
+            },
+            {
+              name: 'Core Features',
+              tasks: ['Timeline UI', 'Real-time updates', 'Scheduling logic'],
+              estimate: '5h',
+            },
+            {
+              name: 'Integration',
+              tasks: ['Grid API', 'WebSocket', 'Error handling'],
+              estimate: '3h',
+            },
+            { name: 'Quality', tasks: ['Tests', 'Security review', 'Performance'], estimate: '2h' },
+          ],
+          totalEstimate: { optimistic: '10h', expected: '13h', pessimistic: '18h' },
+          confidence: 0.73,
+          teamComposition: ['Lead', 'Mobile Dev', 'Backend Dev', 'QA', 'Reviewer'],
+        },
+        null,
+        2
+      ),
+
       'code-generation': `// Charging State Machine Implementation
 import { createMachine, assign } from 'xstate';
 
@@ -306,35 +339,75 @@ export const chargingMachine = createMachine({
     }
   }
 });`,
-      
-      'code-review': JSON.stringify({
-        overallAssessment: 'PASS',
-        score: 87,
-        findings: [
-          { severity: 'info', message: 'State machine is well-structured with proper transitions', file: 'chargingMachine.ts', line: 1 },
-          { severity: 'info', message: 'Good use of XState for complex state management', file: 'chargingMachine.ts', line: 3 },
-          { severity: 'warning', message: 'Consider adding timeout guard for charging state', file: 'chargingMachine.ts', line: 42 },
-          { severity: 'info', message: 'Error handling covers main failure modes', file: 'chargingMachine.ts', line: 55 }
-        ],
-        suggestions: [
-          'Add a maximum charging duration guard to prevent overcharging',
-          'Consider adding a "gridUnavailable" state for connectivity loss',
-          'Add metrics emission for charging duration and energy consumed'
-        ],
-        securityReview: {
-          status: 'PASS',
-          notes: 'No security vulnerabilities detected. Input validation present.'
-        }
-      }, null, 2),
-      
-      'risk': JSON.stringify({
-        risks: [
-          { category: 'technical', description: 'WebSocket drops on poor networks', probability: 0.6, impact: 0.7, mitigation: 'Optimistic updates with reconciliation' },
-          { category: 'integration', description: 'Grid API rate limits', probability: 0.3, impact: 0.8, mitigation: 'Request batching and caching' }
-        ],
-        overallRisk: 'medium',
-        confidence: 0.78
-      }, null, 2)
+
+      'code-review': JSON.stringify(
+        {
+          overallAssessment: 'PASS',
+          score: 87,
+          findings: [
+            {
+              severity: 'info',
+              message: 'State machine is well-structured with proper transitions',
+              file: 'chargingMachine.ts',
+              line: 1,
+            },
+            {
+              severity: 'info',
+              message: 'Good use of XState for complex state management',
+              file: 'chargingMachine.ts',
+              line: 3,
+            },
+            {
+              severity: 'warning',
+              message: 'Consider adding timeout guard for charging state',
+              file: 'chargingMachine.ts',
+              line: 42,
+            },
+            {
+              severity: 'info',
+              message: 'Error handling covers main failure modes',
+              file: 'chargingMachine.ts',
+              line: 55,
+            },
+          ],
+          suggestions: [
+            'Add a maximum charging duration guard to prevent overcharging',
+            'Consider adding a "gridUnavailable" state for connectivity loss',
+            'Add metrics emission for charging duration and energy consumed',
+          ],
+          securityReview: {
+            status: 'PASS',
+            notes: 'No security vulnerabilities detected. Input validation present.',
+          },
+        },
+        null,
+        2
+      ),
+
+      risk: JSON.stringify(
+        {
+          risks: [
+            {
+              category: 'technical',
+              description: 'WebSocket drops on poor networks',
+              probability: 0.6,
+              impact: 0.7,
+              mitigation: 'Optimistic updates with reconciliation',
+            },
+            {
+              category: 'integration',
+              description: 'Grid API rate limits',
+              probability: 0.3,
+              impact: 0.8,
+              mitigation: 'Request batching and caching',
+            },
+          ],
+          overallRisk: 'medium',
+          confidence: 0.78,
+        },
+        null,
+        2
+      ),
     };
 
     return responses[taskType] || responses['planning'] || 'Analysis complete.';

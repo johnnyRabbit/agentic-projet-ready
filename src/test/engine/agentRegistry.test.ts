@@ -31,7 +31,7 @@ describe('AgentRegistry', () => {
   });
 
   it('should return undefined for non-existent role', () => {
-    const agent = registry.getByRole('non-existent' as any);
+    const agent = registry.getByRole('non-existent' as Parameters<AgentRegistry['getByRole']>[0]);
     expect(agent).toBeUndefined();
   });
 
@@ -56,7 +56,7 @@ describe('AgentRegistry', () => {
 
   it('should have skills array for each agent', () => {
     const agents = registry.getAll();
-    agents.forEach(agent => {
+    agents.forEach((agent) => {
       expect(Array.isArray(agent.skills)).toBe(true);
       expect(agent.skills.length).toBeGreaterThan(0);
     });
@@ -64,14 +64,14 @@ describe('AgentRegistry', () => {
 
   it('should have positive budget for each agent', () => {
     const agents = registry.getAll();
-    agents.forEach(agent => {
+    agents.forEach((agent) => {
       expect(agent.maxBudget).toBeGreaterThan(0);
     });
   });
 
   it('should have positive max retries for each agent', () => {
     const agents = registry.getAll();
-    agents.forEach(agent => {
+    agents.forEach((agent) => {
       expect(agent.maxRetries).toBeGreaterThanOrEqual(0);
     });
   });
