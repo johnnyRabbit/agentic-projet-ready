@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import { assertLegacyExecutionAllowed } from '../engine/intake/IntakeService';
 import { create } from 'zustand';
 import {
   AgentRun,
@@ -153,6 +154,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   executeWorkflow: async (type, input) => {
     const { harness, contextEngine, currentProjectId } = get();
+    assertLegacyExecutionAllowed(currentProjectId);
 
     set({ isExecuting: true, executionLog: [`🚀 Starting ${type} workflow...`] });
 

@@ -87,6 +87,9 @@ export class GroqProvider implements ModelProvider {
     const model = this.selectModel(request);
 
     if (!this.apiKey) {
+      if (request.executionMode === 'real') {
+        throw new Error('Configure a chave Groq nas definições antes de analisar.');
+      }
       // Simulation mode — return realistic mock response
       logger.debug('[GroqProvider] No API key, using simulation mode');
       return this.simulateResponse(request, model, startTime);
@@ -96,6 +99,7 @@ export class GroqProvider implements ModelProvider {
       logger.debug(`[GroqProvider] Executing request with model: ${model.id}`);
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        signal: AbortSignal.timeout(60000),
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -111,6 +115,9 @@ export class GroqProvider implements ModelProvider {
       });
 
       if (!response.ok) {
+        if (request.executionMode === 'real') {
+          throw new Error(`Falha Groq (HTTP ${response.status}). Tente novamente.`);
+        }
         const errorText = await response.text();
         let errorMessage = `Groq API error: ${response.status}`;
 
@@ -146,6 +153,13 @@ export class GroqProvider implements ModelProvider {
         finishReason: data.choices[0]?.finish_reason || 'stop',
       };
     } catch (error) {
+      if (request.executionMode === 'real') {
+        throw new Error(
+          error instanceof Error && error.message.startsWith('Falha Groq')
+            ? error.message
+            : 'Não foi possível concluir a chamada Groq. Verifique a ligação e tente novamente.'
+        );
+      }
       // Fallback to simulation on error
       console.warn('[GroqProvider] API call failed, using simulation:', error);
       return this.simulateResponse(request, model, startTime);
