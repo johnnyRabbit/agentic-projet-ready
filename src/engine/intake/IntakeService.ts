@@ -189,10 +189,17 @@ export function isApproved(record: IntakeRecord): boolean {
 export class IntakeService {
   async list(): Promise<IntakeRecord[]> {
     const rows = await database.getAll('settings');
-    return rows
-      .filter((row) => row.key.startsWith(prefix))
-      .map((row) => parseRecord(row.value))
-      .sort((a, b) => b.source.createdAt.localeCompare(a.source.createdAt));
+    const records: IntakeRecord[] = [];
+    for (const row of rows.filter((item) => item.key.startsWith(prefix))) {
+      // A corrupt historical entry must not prevent a new request from being created.
+      // It is left untouched and an individual read still reports it as invalid.
+      try {
+        records.push(parseRecord(row.value));
+      } catch {
+        // Do not alter persisted data without an explicit user action.
+      }
+    }
+    return records.sort((a, b) => b.source.createdAt.localeCompare(a.source.createdAt));
   }
   async get(id: string): Promise<IntakeRecord> {
     const row = await database.get('settings', prefix + id);
