@@ -2,7 +2,7 @@
 
 Este é o plano de referência para novo trabalho. Os documentos `PHASE_*` e guias de expansão preservam o histórico, mas a numeração antiga não determina a sequência abaixo. Estado observado: [STATUS.md](STATUS.md). Objetivo: [PRODUCT_SPEC.md](PRODUCT_SPEC.md).
 
-M0 tem uma primeira entrega local verificada; ver [relatório de validação](VALIDATION_M0.md). M1–M5 continuam pendentes. Componentes existentes devem ser aproveitados. Adiar funcionalidades secundárias até demonstrar o percurso principal.
+M0 tem uma primeira entrega local verificada; ver [relatório de validação](VALIDATION_M0.md). M1 está implementado com validação automatizada local; a análise com fornecedor autenticado continua por verificar. M2–M5 continuam pendentes. Componentes existentes devem ser aproveitados. Adiar funcionalidades secundárias até demonstrar o percurso principal.
 
 ## M0 — Base verificável
 
@@ -16,6 +16,8 @@ Conclusão: instalação reproduzível e verificações acordadas passam; limita
 ## M1 — Entrada, análise e proposta aprovada
 
 Depende de M0.
+
+Entrega local: `WorkRequest` e `src/engine/intake/` implementam entrada, análise com contrato validado, esclarecimentos, edição e decisões persistentes por versão. A skill é carregada explicitamente pelo serviço; o modo real Groq não usa fallback simulado. Ver [validação M1](VALIDATION_M1.md) e [decisão de persistência e isolamento](decisions/0001-m1-propostas-versionadas.md). Falta validar a qualidade da análise com uma chamada autenticada ao fornecedor; os cenários automatizados usam respostas controladas.
 
 - Guardar ideia ou especificação recebida como texto.
 - Criar uma skill de análise de requisitos: instruções versionadas, contrato de saída e carregamento explícito no motor.

@@ -31,6 +31,8 @@ export type ModelCapability =
   'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative';
 
 export interface ModelRequest {
+  /** Real requests must never fall back to demonstration data. */
+  executionMode?: 'real' | 'demo';
   taskType: ModelCapability;
   complexity: 'low' | 'medium' | 'high';
   risk: 'low' | 'medium' | 'high';

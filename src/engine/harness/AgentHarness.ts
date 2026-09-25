@@ -13,6 +13,7 @@ import { ModelRouter } from '../models/ModelRouter';
 import { BudgetEngine } from '../budget/BudgetEngine';
 import { ContextEngine } from '../context/ContextEngine';
 import { AgentRegistry } from '../agents/AgentRegistry';
+import { assertLegacyExecutionAllowed } from '../intake/IntakeService';
 
 // ============================================================
 // AGENT HARNESS — Central Orchestration Engine
@@ -61,6 +62,7 @@ export class AgentHarness {
     projectId: string,
     input: string
   ): Promise<AgentRun> {
+    assertLegacyExecutionAllowed(projectId);
     const definition = this.agentRegistry.getByRole(role);
     if (!definition) {
       throw new Error(`No agent definition found for role: ${role}`);
@@ -205,6 +207,7 @@ export class AgentHarness {
    * Execute a complete workflow
    */
   async executeWorkflow(workflow: Workflow): Promise<Workflow> {
+    assertLegacyExecutionAllowed(workflow.projectId);
     this.workflows.set(workflow.id, workflow);
     workflow.status = 'running';
     workflow.startedAt = new Date().toISOString();
