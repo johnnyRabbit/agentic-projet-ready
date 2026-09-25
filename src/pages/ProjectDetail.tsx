@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import { mockProjects, mockTasks, mockRisks, mockAgents, mockDecisions, mockQuestions, mockPR, mockModelCalls } from '../data/mockData';
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  Circle, 
-  Clock, 
-  AlertTriangle, 
+import {
+  mockProjects,
+  mockTasks,
+  mockRisks,
+  mockAgents,
+  mockDecisions,
+  mockQuestions,
+  mockPR,
+  mockModelCalls,
+} from '../data/mockData';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
   GitPullRequest,
   FileCode,
   Shield,
@@ -16,7 +24,6 @@ import {
   Scale,
   TestTube,
   ChevronRight,
-  ExternalLink
 } from 'lucide-react';
 
 interface ProjectDetailProps {
@@ -24,11 +31,24 @@ interface ProjectDetailProps {
   onBack: () => void;
 }
 
-type Tab = 'overview' | 'requirements' | 'architecture' | 'plan' | 'tasks' | 'agents' | 'code' | 'tests' | 'reviews' | 'decisions' | 'risk' | 'cost' | 'activity';
+type Tab =
+  | 'overview'
+  | 'requirements'
+  | 'architecture'
+  | 'plan'
+  | 'tasks'
+  | 'agents'
+  | 'code'
+  | 'tests'
+  | 'reviews'
+  | 'decisions'
+  | 'risk'
+  | 'cost'
+  | 'activity';
 
 export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const project = mockProjects.find(p => p.id === projectId) || mockProjects[0];
+  const project = mockProjects.find((p) => p.id === projectId) || mockProjects[0];
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Activity size={14} /> },
@@ -54,11 +74,17 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold text-white">{project.name}</h1>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              project.status === 'active' ? 'bg-success/20 text-success' :
-              project.status === 'completed' ? 'bg-indigo-500/20 text-indigo-400' :
-              'bg-slate-500/20 text-slate-400'
-            }`}>{project.status}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                project.status === 'active'
+                  ? 'bg-success/20 text-success'
+                  : project.status === 'completed'
+                    ? 'bg-indigo-500/20 text-indigo-400'
+                    : 'bg-slate-500/20 text-slate-400'
+              }`}
+            >
+              {project.status}
+            </span>
           </div>
           <p className="text-sm text-slate-400 mt-0.5">{project.description}</p>
         </div>
@@ -68,14 +94,17 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
             <div className="text-lg font-bold text-white">{project.progress}%</div>
           </div>
           <div className="w-32 h-2 bg-dark-500 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style={{ width: `${project.progress}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+              style={{ width: `${project.progress}%` }}
+            />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-dark-800 rounded-lg p-1 overflow-x-auto">
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -110,7 +139,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
   );
 }
 
-function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
+function OverviewTab({ project }: { project: (typeof mockProjects)[0] }) {
   return (
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2 space-y-6">
@@ -129,11 +158,15 @@ function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
               </div>
               <div className="bg-dark-700 rounded-lg p-3">
                 <div className="text-xs text-slate-400">Lines</div>
-                <div className="text-lg font-bold text-white">+{mockPR.linesAdded} <span className="text-danger">-{mockPR.linesRemoved}</span></div>
+                <div className="text-lg font-bold text-white">
+                  +{mockPR.linesAdded} <span className="text-danger">-{mockPR.linesRemoved}</span>
+                </div>
               </div>
               <div className="bg-dark-700 rounded-lg p-3">
                 <div className="text-xs text-slate-400">Tests</div>
-                <div className="text-lg font-bold text-success">{mockPR.testsPassing}/{mockPR.testsTotal} ✓</div>
+                <div className="text-lg font-bold text-success">
+                  {mockPR.testsPassing}/{mockPR.testsTotal} ✓
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4 mb-4">
@@ -171,17 +204,28 @@ function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
             Questions
           </h3>
           <div className="space-y-3">
-            {mockQuestions.map(q => (
-              <div key={q.id} className={`bg-dark-700 rounded-lg p-4 border ${
-                q.priority === 'blocking' ? 'border-danger/30' : 'border-dark-500'
-              }`}>
+            {mockQuestions.map((q) => (
+              <div
+                key={q.id}
+                className={`bg-dark-700 rounded-lg p-4 border ${
+                  q.priority === 'blocking' ? 'border-danger/30' : 'border-dark-500'
+                }`}
+              >
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    q.priority === 'blocking' ? 'bg-danger/20 text-danger' :
-                    q.priority === 'important' ? 'bg-warning/20 text-warning' :
-                    'bg-slate-500/20 text-slate-400'
-                  }`}>{q.priority.toUpperCase()}</span>
-                  <span className={`text-xs ${q.status === 'answered' ? 'text-success' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      q.priority === 'blocking'
+                        ? 'bg-danger/20 text-danger'
+                        : q.priority === 'important'
+                          ? 'bg-warning/20 text-warning'
+                          : 'bg-slate-500/20 text-slate-400'
+                    }`}
+                  >
+                    {q.priority.toUpperCase()}
+                  </span>
+                  <span
+                    className={`text-xs ${q.status === 'answered' ? 'text-success' : 'text-slate-400'}`}
+                  >
                     {q.status === 'answered' ? '✓ Answered' : 'Open'}
                   </span>
                 </div>
@@ -208,11 +252,13 @@ function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
             <div className="text-xs text-slate-400">of €{project.budget.total} budget</div>
           </div>
           <div className="h-3 bg-dark-500 rounded-full overflow-hidden mb-2">
-            <div 
+            <div
               className={`h-full rounded-full transition-all ${
-                project.budget.spent / project.budget.total > 0.9 ? 'bg-danger' :
-                project.budget.spent / project.budget.total > 0.7 ? 'bg-warning' :
-                'bg-success'
+                project.budget.spent / project.budget.total > 0.9
+                  ? 'bg-danger'
+                  : project.budget.spent / project.budget.total > 0.7
+                    ? 'bg-warning'
+                    : 'bg-success'
               }`}
               style={{ width: `${(project.budget.spent / project.budget.total) * 100}%` }}
             />
@@ -230,18 +276,27 @@ function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
             Active Risks
           </h3>
           <div className="space-y-2">
-            {mockRisks.filter(r => r.status === 'open').map(risk => (
-              <div key={risk.id} className="bg-dark-700 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${
-                    risk.severity === 'high' ? 'bg-danger' :
-                    risk.severity === 'medium' ? 'bg-warning' : 'bg-success'
-                  }`} />
-                  <span className="text-xs font-medium text-white capitalize">{risk.category}</span>
+            {mockRisks
+              .filter((r) => r.status === 'open')
+              .map((risk) => (
+                <div key={risk.id} className="bg-dark-700 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        risk.severity === 'high'
+                          ? 'bg-danger'
+                          : risk.severity === 'medium'
+                            ? 'bg-warning'
+                            : 'bg-success'
+                      }`}
+                    />
+                    <span className="text-xs font-medium text-white capitalize">
+                      {risk.category}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">{risk.description}</p>
                 </div>
-                <p className="text-xs text-slate-400">{risk.description}</p>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
@@ -249,21 +304,31 @@ function OverviewTab({ project }: { project: typeof mockProjects[0] }) {
         <div className="glass-card rounded-xl p-6">
           <h3 className="text-sm font-semibold text-white mb-4">Team</h3>
           <div className="space-y-2">
-            {mockAgents.filter(a => ['running', 'waiting', 'complete'].includes(a.status)).map(agent => (
-              <div key={agent.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-dark-700">
-                <span className="text-lg">{agent.avatar}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-white truncate">{agent.name}</div>
-                  <div className="text-xs text-slate-400">{agent.role}</div>
+            {mockAgents
+              .filter((a) => ['running', 'waiting', 'complete'].includes(a.status))
+              .map((agent) => (
+                <div
+                  key={agent.id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-dark-700"
+                >
+                  <span className="text-lg">{agent.avatar}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-white truncate">{agent.name}</div>
+                    <div className="text-xs text-slate-400">{agent.role}</div>
+                  </div>
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      agent.status === 'running'
+                        ? 'bg-success animate-pulse-glow'
+                        : agent.status === 'waiting'
+                          ? 'bg-warning'
+                          : agent.status === 'complete'
+                            ? 'bg-indigo-400'
+                            : 'bg-slate-500'
+                    }`}
+                  />
                 </div>
-                <div className={`w-2 h-2 rounded-full ${
-                  agent.status === 'running' ? 'bg-success animate-pulse-glow' :
-                  agent.status === 'waiting' ? 'bg-warning' :
-                  agent.status === 'complete' ? 'bg-indigo-400' :
-                  'bg-slate-500'
-                }`} />
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
@@ -276,15 +341,24 @@ function TasksTab() {
     <div className="glass-card rounded-xl p-6">
       <h3 className="text-sm font-semibold text-white mb-4">Tasks</h3>
       <div className="space-y-2">
-        {mockTasks.map(task => (
-          <div key={task.id} className="flex items-center gap-4 bg-dark-700 rounded-lg p-4 border border-dark-500">
-            <div className={`w-3 h-3 rounded-full ${
-              task.status === 'done' ? 'bg-success' :
-              task.status === 'in_progress' ? 'bg-indigo-400 animate-pulse-glow' :
-              task.status === 'review' ? 'bg-purple-400' :
-              task.status === 'blocked' ? 'bg-danger' :
-              'bg-slate-500'
-            }`} />
+        {mockTasks.map((task) => (
+          <div
+            key={task.id}
+            className="flex items-center gap-4 bg-dark-700 rounded-lg p-4 border border-dark-500"
+          >
+            <div
+              className={`w-3 h-3 rounded-full ${
+                task.status === 'done'
+                  ? 'bg-success'
+                  : task.status === 'in_progress'
+                    ? 'bg-indigo-400 animate-pulse-glow'
+                    : task.status === 'review'
+                      ? 'bg-purple-400'
+                      : task.status === 'blocked'
+                        ? 'bg-danger'
+                        : 'bg-slate-500'
+              }`}
+            />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 font-mono">{task.id}</span>
@@ -293,14 +367,22 @@ function TasksTab() {
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-xs text-slate-400">→ {task.assignedTo}</span>
                 <span className="text-xs text-slate-500">Est: {task.estimate}</span>
-                {task.actual && <span className="text-xs text-slate-500">Actual: {task.actual}</span>}
+                {task.actual && (
+                  <span className="text-xs text-slate-500">Actual: {task.actual}</span>
+                )}
               </div>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              task.priority === 'high' ? 'bg-danger/20 text-danger' :
-              task.priority === 'medium' ? 'bg-warning/20 text-warning' :
-              'bg-slate-500/20 text-slate-400'
-            }`}>{task.priority}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                task.priority === 'high'
+                  ? 'bg-danger/20 text-danger'
+                  : task.priority === 'medium'
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-slate-500/20 text-slate-400'
+              }`}
+            >
+              {task.priority}
+            </span>
             <ChevronRight size={14} className="text-slate-500" />
           </div>
         ))}
@@ -312,36 +394,52 @@ function TasksTab() {
 function AgentsTab() {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {mockAgents.map(agent => (
+      {mockAgents.map((agent) => (
         <div key={agent.id} className="glass-card rounded-xl p-5">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-3xl">{agent.avatar}</span>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-white">{agent.name}</span>
-                <div className={`w-2 h-2 rounded-full ${
-                  agent.status === 'running' ? 'bg-success animate-pulse-glow' :
-                  agent.status === 'waiting' ? 'bg-warning' :
-                  agent.status === 'complete' ? 'bg-indigo-400' :
-                  agent.status === 'idle' ? 'bg-slate-500' :
-                  'bg-danger'
-                }`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    agent.status === 'running'
+                      ? 'bg-success animate-pulse-glow'
+                      : agent.status === 'waiting'
+                        ? 'bg-warning'
+                        : agent.status === 'complete'
+                          ? 'bg-indigo-400'
+                          : agent.status === 'idle'
+                            ? 'bg-slate-500'
+                            : 'bg-danger'
+                  }`}
+                />
               </div>
               <span className="text-xs text-slate-400">{agent.role}</span>
             </div>
           </div>
           {agent.currentTask && (
-            <p className="text-xs text-slate-300 mb-3 bg-dark-700 rounded p-2">{agent.currentTask}</p>
+            <p className="text-xs text-slate-300 mb-3 bg-dark-700 rounded p-2">
+              {agent.currentTask}
+            </p>
           )}
           <div className="flex flex-wrap gap-1 mb-3">
-            {agent.skills.map(skill => (
-              <span key={skill} className="text-xs bg-dark-600 text-slate-300 px-2 py-0.5 rounded">{skill}</span>
+            {agent.skills.map((skill) => (
+              <span key={skill} className="text-xs bg-dark-600 text-slate-300 px-2 py-0.5 rounded">
+                {skill}
+              </span>
             ))}
           </div>
           <div className="flex items-center justify-between text-xs border-t border-dark-500 pt-3">
-            <span className="text-slate-400">Model: <span className="text-white">{agent.modelUsed || '—'}</span></span>
-            <span className="text-slate-400">Cost: <span className="text-white">€{agent.cost.toFixed(2)}</span></span>
-            <span className="text-slate-400">Tokens: <span className="text-white">{(agent.tokensUsed / 1000).toFixed(1)}k</span></span>
+            <span className="text-slate-400">
+              Model: <span className="text-white">{agent.modelUsed || '—'}</span>
+            </span>
+            <span className="text-slate-400">
+              Cost: <span className="text-white">€{agent.cost.toFixed(2)}</span>
+            </span>
+            <span className="text-slate-400">
+              Tokens: <span className="text-white">{(agent.tokensUsed / 1000).toFixed(1)}k</span>
+            </span>
           </div>
         </div>
       ))}
@@ -352,22 +450,33 @@ function AgentsTab() {
 function DecisionsTab() {
   return (
     <div className="space-y-4">
-      {mockDecisions.map(decision => (
-        <div key={decision.id} className={`glass-card rounded-xl p-6 ${decision.status === 'escalated' ? 'border-l-2 border-l-warning' : ''}`}>
+      {mockDecisions.map((decision) => (
+        <div
+          key={decision.id}
+          className={`glass-card rounded-xl p-6 ${decision.status === 'escalated' ? 'border-l-2 border-l-warning' : ''}`}
+        >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-white">{decision.title}</h3>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              decision.status === 'decided' ? 'bg-success/20 text-success' :
-              decision.status === 'escalated' ? 'bg-warning/20 text-warning' :
-              'bg-indigo-500/20 text-indigo-400'
-            }`}>{decision.status}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                decision.status === 'decided'
+                  ? 'bg-success/20 text-success'
+                  : decision.status === 'escalated'
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-indigo-500/20 text-indigo-400'
+              }`}
+            >
+              {decision.status}
+            </span>
           </div>
           <p className="text-xs text-slate-400 mb-4">{decision.context}</p>
-          
+
           <div className="space-y-2 mb-4">
             {decision.agents.map((agent, i) => (
               <div key={i} className="flex items-start gap-2 bg-dark-700 rounded p-2.5">
-                <span className="text-xs font-medium text-indigo-300 whitespace-nowrap">{agent.name}:</span>
+                <span className="text-xs font-medium text-indigo-300 whitespace-nowrap">
+                  {agent.name}:
+                </span>
                 <span className="text-xs text-slate-300">{agent.position}</span>
               </div>
             ))}
@@ -379,10 +488,16 @@ function DecisionsTab() {
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs text-slate-400">Confidence:</span>
               <div className="flex-1 h-1.5 bg-dark-500 rounded-full overflow-hidden max-w-32">
-                <div className={`h-full rounded-full ${
-                  decision.confidence > 80 ? 'bg-success' :
-                  decision.confidence > 60 ? 'bg-warning' : 'bg-danger'
-                }`} style={{ width: `${decision.confidence}%` }} />
+                <div
+                  className={`h-full rounded-full ${
+                    decision.confidence > 80
+                      ? 'bg-success'
+                      : decision.confidence > 60
+                        ? 'bg-warning'
+                        : 'bg-danger'
+                  }`}
+                  style={{ width: `${decision.confidence}%` }}
+                />
               </div>
               <span className="text-xs text-white">{decision.confidence}%</span>
             </div>
@@ -390,9 +505,15 @@ function DecisionsTab() {
 
           {decision.requiresApproval && (
             <div className="mt-4 flex gap-3">
-              <button className="bg-success hover:bg-success/90 text-white px-3 py-1.5 rounded text-xs font-medium">Approve</button>
-              <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">Request Changes</button>
-              <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">Escalate Further</button>
+              <button className="bg-success hover:bg-success/90 text-white px-3 py-1.5 rounded text-xs font-medium">
+                Approve
+              </button>
+              <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
+                Request Changes
+              </button>
+              <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
+                Escalate Further
+              </button>
             </div>
           )}
         </div>
@@ -418,25 +539,41 @@ function RiskTab() {
           <div className="text-xs text-slate-400">Mitigated</div>
         </div>
       </div>
-      {mockRisks.map(risk => (
+      {mockRisks.map((risk) => (
         <div key={risk.id} className="glass-card rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <span className={`w-3 h-3 rounded-full ${
-                risk.severity === 'high' ? 'bg-danger' :
-                risk.severity === 'medium' ? 'bg-warning' : 'bg-success'
-              }`} />
+              <span
+                className={`w-3 h-3 rounded-full ${
+                  risk.severity === 'high'
+                    ? 'bg-danger'
+                    : risk.severity === 'medium'
+                      ? 'bg-warning'
+                      : 'bg-success'
+                }`}
+              />
               <span className="text-sm font-medium text-white capitalize">{risk.category}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                risk.status === 'open' ? 'bg-warning/20 text-warning' :
-                risk.status === 'mitigated' ? 'bg-success/20 text-success' :
-                'bg-slate-500/20 text-slate-400'
-              }`}>{risk.status}</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  risk.status === 'open'
+                    ? 'bg-warning/20 text-warning'
+                    : risk.status === 'mitigated'
+                      ? 'bg-success/20 text-success'
+                      : 'bg-slate-500/20 text-slate-400'
+                }`}
+              >
+                {risk.status}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span>P: {(risk.probability * 100).toFixed(0)}%</span>
               <span>× I: {(risk.impact * 100).toFixed(0)}%</span>
-              <span>= <span className="text-white font-medium">{(risk.probability * risk.impact * 100).toFixed(0)}</span></span>
+              <span>
+                ={' '}
+                <span className="text-white font-medium">
+                  {(risk.probability * risk.impact * 100).toFixed(0)}
+                </span>
+              </span>
             </div>
           </div>
           <p className="text-sm text-slate-300 mb-3">{risk.description}</p>
@@ -493,9 +630,15 @@ function CostTab() {
                 <tr key={i} className="border-b border-dark-600 hover:bg-dark-700">
                   <td className="py-2.5 px-3 text-slate-300">{call.provider}</td>
                   <td className="py-2.5 px-3 text-white font-mono">{call.model}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{(call.inputTokens / 1000).toFixed(1)}k</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{(call.outputTokens / 1000).toFixed(1)}k</td>
-                  <td className="py-2.5 px-3 text-right text-white font-medium">€{call.cost.toFixed(2)}</td>
+                  <td className="py-2.5 px-3 text-right text-slate-300">
+                    {(call.inputTokens / 1000).toFixed(1)}k
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-slate-300">
+                    {(call.outputTokens / 1000).toFixed(1)}k
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-white font-medium">
+                    €{call.cost.toFixed(2)}
+                  </td>
                   <td className="py-2.5 px-3 text-slate-300">{call.agent}</td>
                   <td className="py-2.5 px-3 text-slate-300">{call.task}</td>
                   <td className="py-2.5 px-3 text-right text-slate-400">{call.timestamp}</td>
@@ -519,7 +662,9 @@ function ReviewsTab() {
             <CheckCircle2 size={16} className="text-success" />
             <span className="text-sm text-white font-medium">Agent Review — Passed</span>
           </div>
-          <p className="text-xs text-slate-400 mb-3">Reviewer Agent found no critical issues. 2 minor suggestions applied.</p>
+          <p className="text-xs text-slate-400 mb-3">
+            Reviewer Agent found no critical issues. 2 minor suggestions applied.
+          </p>
           <div className="flex gap-4 text-xs">
             <span className="text-success">✓ Correctness</span>
             <span className="text-success">✓ Security</span>
@@ -532,7 +677,9 @@ function ReviewsTab() {
             <Shield size={16} className="text-success" />
             <span className="text-sm text-white font-medium">Security Review — Passed</span>
           </div>
-          <p className="text-xs text-slate-400">No vulnerabilities detected. Input validation verified.</p>
+          <p className="text-xs text-slate-400">
+            No vulnerabilities detected. Input validation verified.
+          </p>
         </div>
       </div>
     </div>
@@ -545,25 +692,52 @@ function RequirementsTab() {
       <h3 className="text-sm font-semibold text-white mb-4">Extracted Requirements</h3>
       <div className="space-y-3">
         {[
-          { id: 'REQ-001', text: 'User can view charging timeline for next 7 days', status: 'satisfied' },
-          { id: 'REQ-002', text: 'System automatically schedules charging during off-peak hours', status: 'satisfied' },
-          { id: 'REQ-003', text: 'User can manually override scheduled charging times', status: 'satisfied' },
+          {
+            id: 'REQ-001',
+            text: 'User can view charging timeline for next 7 days',
+            status: 'satisfied',
+          },
+          {
+            id: 'REQ-002',
+            text: 'System automatically schedules charging during off-peak hours',
+            status: 'satisfied',
+          },
+          {
+            id: 'REQ-003',
+            text: 'User can manually override scheduled charging times',
+            status: 'satisfied',
+          },
           { id: 'REQ-004', text: 'Real-time updates when grid prices change', status: 'satisfied' },
-          { id: 'REQ-005', text: 'Notifications for charging start/complete/error events', status: 'in_progress' },
+          {
+            id: 'REQ-005',
+            text: 'Notifications for charging start/complete/error events',
+            status: 'in_progress',
+          },
           { id: 'REQ-006', text: 'Charging history with cost breakdown', status: 'pending' },
-        ].map(req => (
+        ].map((req) => (
           <div key={req.id} className="flex items-center gap-3 bg-dark-700 rounded-lg p-3">
-            <span className={`w-2 h-2 rounded-full ${
-              req.status === 'satisfied' ? 'bg-success' :
-              req.status === 'in_progress' ? 'bg-warning' : 'bg-slate-500'
-            }`} />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                req.status === 'satisfied'
+                  ? 'bg-success'
+                  : req.status === 'in_progress'
+                    ? 'bg-warning'
+                    : 'bg-slate-500'
+              }`}
+            />
             <span className="text-xs text-slate-500 font-mono">{req.id}</span>
             <span className="text-sm text-slate-300 flex-1">{req.text}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              req.status === 'satisfied' ? 'bg-success/20 text-success' :
-              req.status === 'in_progress' ? 'bg-warning/20 text-warning' :
-              'bg-slate-500/20 text-slate-400'
-            }`}>{req.status}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                req.status === 'satisfied'
+                  ? 'bg-success/20 text-success'
+                  : req.status === 'in_progress'
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-slate-500/20 text-slate-400'
+              }`}
+            >
+              {req.status}
+            </span>
           </div>
         ))}
       </div>
@@ -577,10 +751,26 @@ function ArchitectureTab() {
       <h3 className="text-sm font-semibold text-white mb-4">Architecture Decisions</h3>
       <div className="grid grid-cols-2 gap-4">
         {[
-          { title: 'State Management', decision: 'XState', reason: 'Complex state transitions need formal verification' },
-          { title: 'Database', decision: 'PostgreSQL + Partitioned Tables', reason: 'Simple initially, can extend to TimescaleDB if needed' },
-          { title: 'Real-time', decision: 'WebSocket + Optimistic Updates', reason: 'Best UX with server reconciliation fallback' },
-          { title: 'API Pattern', decision: 'REST + WebSocket events', reason: 'CRUD via REST, live updates via WebSocket' },
+          {
+            title: 'State Management',
+            decision: 'XState',
+            reason: 'Complex state transitions need formal verification',
+          },
+          {
+            title: 'Database',
+            decision: 'PostgreSQL + Partitioned Tables',
+            reason: 'Simple initially, can extend to TimescaleDB if needed',
+          },
+          {
+            title: 'Real-time',
+            decision: 'WebSocket + Optimistic Updates',
+            reason: 'Best UX with server reconciliation fallback',
+          },
+          {
+            title: 'API Pattern',
+            decision: 'REST + WebSocket events',
+            reason: 'CRUD via REST, live updates via WebSocket',
+          },
         ].map((item, i) => (
           <div key={i} className="bg-dark-700 rounded-lg p-4">
             <div className="text-xs text-slate-400 mb-1">{item.title}</div>
@@ -599,20 +789,54 @@ function PlanTab() {
       <h3 className="text-sm font-semibold text-white mb-4">Implementation Plan</h3>
       <div className="space-y-3">
         {[
-          { phase: 'Phase 1', title: 'Foundation', tasks: 'Database schema, API endpoints, basic state machine', status: 'complete' },
-          { phase: 'Phase 2', title: 'Core Features', tasks: 'Charging timeline UI, real-time updates, scheduling logic', status: 'complete' },
-          { phase: 'Phase 3', title: 'Integration', tasks: 'Smart grid API, WebSocket connection, error handling', status: 'active' },
-          { phase: 'Phase 4', title: 'Quality', tasks: 'Integration tests, security review, performance optimization', status: 'pending' },
-          { phase: 'Phase 5', title: 'Delivery', tasks: 'Final review, PR preparation, documentation', status: 'pending' },
+          {
+            phase: 'Phase 1',
+            title: 'Foundation',
+            tasks: 'Database schema, API endpoints, basic state machine',
+            status: 'complete',
+          },
+          {
+            phase: 'Phase 2',
+            title: 'Core Features',
+            tasks: 'Charging timeline UI, real-time updates, scheduling logic',
+            status: 'complete',
+          },
+          {
+            phase: 'Phase 3',
+            title: 'Integration',
+            tasks: 'Smart grid API, WebSocket connection, error handling',
+            status: 'active',
+          },
+          {
+            phase: 'Phase 4',
+            title: 'Quality',
+            tasks: 'Integration tests, security review, performance optimization',
+            status: 'pending',
+          },
+          {
+            phase: 'Phase 5',
+            title: 'Delivery',
+            tasks: 'Final review, PR preparation, documentation',
+            status: 'pending',
+          },
         ].map((phase, i) => (
-          <div key={i} className={`flex items-start gap-4 bg-dark-700 rounded-lg p-4 ${
-            phase.status === 'active' ? 'border border-indigo-500/30' : ''
-          }`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-              phase.status === 'complete' ? 'bg-success/20 text-success' :
-              phase.status === 'active' ? 'bg-indigo-500/20 text-indigo-400' :
-              'bg-dark-500 text-slate-400'
-            }`}>{i + 1}</div>
+          <div
+            key={i}
+            className={`flex items-start gap-4 bg-dark-700 rounded-lg p-4 ${
+              phase.status === 'active' ? 'border border-indigo-500/30' : ''
+            }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                phase.status === 'complete'
+                  ? 'bg-success/20 text-success'
+                  : phase.status === 'active'
+                    ? 'bg-indigo-500/20 text-indigo-400'
+                    : 'bg-dark-500 text-slate-400'
+              }`}
+            >
+              {i + 1}
+            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400">{phase.phase}</span>
@@ -620,11 +844,17 @@ function PlanTab() {
               </div>
               <p className="text-xs text-slate-400 mt-1">{phase.tasks}</p>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              phase.status === 'complete' ? 'bg-success/20 text-success' :
-              phase.status === 'active' ? 'bg-indigo-500/20 text-indigo-400' :
-              'bg-slate-500/20 text-slate-400'
-            }`}>{phase.status}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                phase.status === 'complete'
+                  ? 'bg-success/20 text-success'
+                  : phase.status === 'active'
+                    ? 'bg-indigo-500/20 text-indigo-400'
+                    : 'bg-slate-500/20 text-slate-400'
+              }`}
+            >
+              {phase.status}
+            </span>
           </div>
         ))}
       </div>

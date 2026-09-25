@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 // ============================================================
 // AUDIT LOG — Track all system actions
 // ============================================================
@@ -52,7 +53,7 @@ export class AuditLog {
     }
 
     // Log to console for debugging
-    console.log(`[AUDIT] ${entry.action} on ${entry.resource}`, entry.details);
+    logger.debug(`[AUDIT] ${entry.action} on ${entry.resource}`, entry.details);
 
     return entry;
   }

@@ -4,8 +4,8 @@ Get up and running with AI Engineering Team in 5 minutes!
 
 ## Prerequisites
 
-- Node.js 18+ installed
-- npm or yarn package manager
+- Node.js 24.15.0 installed (see `.nvmrc`)
+- npm 11+ package manager
 - Git (optional, for cloning)
 
 ## Installation
@@ -28,7 +28,7 @@ cd ai-engineering-team
 ### 1. Install Dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
 ### 2. Configure Environment (Optional)

@@ -22,7 +22,7 @@ interface AuthStore {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
+export const useAuthStore = create<AuthStore>((set) => ({
   // Initial state
   user: null,
   session: null,
@@ -33,29 +33,29 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   initialize: async () => {
     try {
       set({ state: 'authenticating' });
-      
+
       const session = await authService.getSession();
       const user = await authService.getCurrentUser();
 
       if (session && user) {
-        set({ 
-          user, 
-          session, 
+        set({
+          user,
+          session,
           state: 'authenticated',
-          error: null 
+          error: null,
         });
       } else {
-        set({ 
-          user: null, 
-          session: null, 
+        set({
+          user: null,
+          session: null,
           state: 'unauthenticated',
-          error: null 
+          error: null,
         });
       }
     } catch (error) {
-      set({ 
+      set({
         state: 'error',
-        error: error instanceof Error ? error.message : 'Failed to initialize auth'
+        error: error instanceof Error ? error.message : 'Failed to initialize auth',
       });
     }
   },
@@ -64,19 +64,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   login: async (email: string, password: string) => {
     try {
       set({ state: 'authenticating', error: null });
-      
+
       const response = await authService.login({ email, password });
-      
-      set({ 
+
+      set({
         user: response.user,
         session: response.session,
         state: 'authenticated',
-        error: null
+        error: null,
       });
     } catch (error) {
-      set({ 
+      set({
         state: 'error',
-        error: error instanceof Error ? error.message : 'Login failed'
+        error: error instanceof Error ? error.message : 'Login failed',
       });
       throw error;
     }
@@ -86,19 +86,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   register: async (email: string, password: string, name: string) => {
     try {
       set({ state: 'authenticating', error: null });
-      
+
       const response = await authService.register({ email, password, name });
-      
-      set({ 
+
+      set({
         user: response.user,
         session: response.session,
         state: 'authenticated',
-        error: null
+        error: null,
       });
     } catch (error) {
-      set({ 
+      set({
         state: 'error',
-        error: error instanceof Error ? error.message : 'Registration failed'
+        error: error instanceof Error ? error.message : 'Registration failed',
       });
       throw error;
     }
@@ -108,15 +108,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   logout: async () => {
     try {
       await authService.logout();
-      set({ 
+      set({
         user: null,
         session: null,
         state: 'unauthenticated',
-        error: null
+        error: null,
       });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Logout failed'
+      set({
+        error: error instanceof Error ? error.message : 'Logout failed',
       });
     }
   },
@@ -129,8 +129,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ session, error: null });
       }
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to refresh session'
+      set({
+        error: error instanceof Error ? error.message : 'Failed to refresh session',
       });
     }
   },
@@ -138,5 +138,5 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // Clear error
   clearError: () => {
     set({ error: null });
-  }
+  },
 }));

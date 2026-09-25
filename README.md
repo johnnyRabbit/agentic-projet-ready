@@ -1,5 +1,7 @@
 # AI Engineering Team — Autonomous Software Delivery Platform
 
+> **Estado e plano atuais:** consulte a [especificação do produto](docs/PRODUCT_SPEC.md), o [roadmap consolidado](docs/ROADMAP.md) e o [estado verificado](docs/STATUS.md). As fases e declarações de conclusão abaixo preservam o histórico e não comprovam funcionamento de ponta a ponta. Para trabalhar no repositório com agentes, consulte [AGENTS.md](AGENTS.md).
+
 > **Give your AI engineering team a User Story. Get back a reviewed Pull Request.**
 
 A production-grade platform that orchestrates autonomous AI agents to execute the complete software delivery lifecycle. The human acts as Tech Lead / CTO / Final Approver while the AI team performs the operational work.
@@ -117,8 +119,10 @@ User Story → 41 minutes of AI work → Reviewed PR → Human approval
 
 ### Installation
 
+Use Node.js **24.15.0** (see `.nvmrc`) and npm 11+. The pinned toolchain is also used in CI.
+
 ```bash
-npm install
+npm ci
 ```
 
 ### Development

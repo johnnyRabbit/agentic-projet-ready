@@ -62,7 +62,7 @@ export class PerformanceMonitor {
    */
   startTimer(name: string): () => PerformanceMetric {
     const startTime = performance.now();
-    
+
     return () => {
       const duration = performance.now() - startTime;
       return this.record(name, duration, 'ms');
@@ -176,10 +176,10 @@ export class PerformanceMonitor {
     const length = values.length;
 
     return {
-      p50: values[Math.floor(length * 0.5)],
-      p90: values[Math.floor(length * 0.9)],
-      p95: values[Math.floor(length * 0.95)],
-      p99: values[Math.floor(length * 0.99)],
+      p50: values[Math.ceil(length * 0.5) - 1],
+      p90: values[Math.ceil(length * 0.9) - 1],
+      p95: values[Math.ceil(length * 0.95) - 1],
+      p99: values[Math.ceil(length * 0.99) - 1],
     };
   }
 
@@ -259,7 +259,7 @@ if (typeof window !== 'undefined' && 'performance' in window) {
     });
     try {
       fcpObserver.observe({ type: 'paint', buffered: true });
-    } catch (e) {
+    } catch {
       // Browser doesn't support paint timing
     }
 
@@ -274,7 +274,7 @@ if (typeof window !== 'undefined' && 'performance' in window) {
     });
     try {
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch (e) {
+    } catch {
       // Browser doesn't support LCP
     }
 
@@ -290,7 +290,7 @@ if (typeof window !== 'undefined' && 'performance' in window) {
     });
     try {
       fidObserver.observe({ type: 'first-input', buffered: true });
-    } catch (e) {
+    } catch {
       // Browser doesn't support FID
     }
   }

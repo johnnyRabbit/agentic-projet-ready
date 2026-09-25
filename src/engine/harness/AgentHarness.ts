@@ -1,4 +1,14 @@
-import { AgentRun, AgentStatus, AgentRole, AgentError, AgentArtifact, CircuitBreakerState, ModelResponse, Workflow, WorkflowStep, Risk, ApprovalRequest, EngineEvent } from '../types';
+import {
+  AgentRun,
+  AgentRole,
+  AgentArtifact,
+  CircuitBreakerState,
+  ModelResponse,
+  Workflow,
+  Risk,
+  ApprovalRequest,
+  EngineEvent,
+} from '../types';
 import { ModelRouter } from '../models/ModelRouter';
 import { BudgetEngine } from '../budget/BudgetEngine';
 import { ContextEngine } from '../context/ContextEngine';
@@ -20,7 +30,7 @@ export class AgentHarness {
   private budgetEngine: BudgetEngine;
   private contextEngine: ContextEngine;
   private agentRegistry: AgentRegistry;
-  
+
   private activeRuns: Map<string, AgentRun> = new Map();
   private completedRuns: AgentRun[] = [];
   private circuitBreakers: Map<string, CircuitBreakerState> = new Map();
@@ -76,20 +86,29 @@ export class AgentHarness {
       totalTokens: 0,
       retries: 0,
       errors: [],
-      artifacts: []
+      artifacts: [],
     };
 
     this.activeRuns.set(run.id, run);
-    this.emitEvent({ type: 'agent.started', agentId, taskId, projectId, data: { role, agentName: definition.name } });
+    this.emitEvent({
+      type: 'agent.started',
+      agentId,
+      taskId,
+      projectId,
+      data: { role, agentName: definition.name },
+    });
 
     try {
       // Build context for the agent
-      const context = this.contextEngine.buildContextPack(projectId, this.getContextTypeForRole(role));
-      
+      const context = this.contextEngine.buildContextPack(
+        projectId,
+        this.getContextTypeForRole(role)
+      );
+
       // Build messages
       const messages = [
         { role: 'system' as const, content: definition.systemPrompt },
-        { role: 'user' as const, content: this.buildAgentInput(input, context.content, role) }
+        { role: 'user' as const, content: this.buildAgentInput(input, context.content, role) },
       ];
 
       // Execute with model router
@@ -100,7 +119,7 @@ export class AgentHarness {
         budget: 'standard',
         messages,
         agentId: run.id,
-        taskId
+        taskId,
       });
 
       // Record cost
@@ -116,7 +135,7 @@ export class AgentHarness {
         taskId,
         projectId,
         timestamp: response.timestamp,
-        latency: response.latency
+        latency: response.latency,
       });
 
       if (!costResult.allowed) {
@@ -125,43 +144,60 @@ export class AgentHarness {
           timestamp: new Date().toISOString(),
           message: costResult.reason || 'Budget exceeded',
           type: 'budget',
-          recoverable: false
+          recoverable: false,
         });
-        this.emitEvent({ type: 'agent.budget_exceeded', agentId, taskId, projectId, data: { reason: costResult.reason } });
+        this.emitEvent({
+          type: 'agent.budget_exceeded',
+          agentId,
+          taskId,
+          projectId,
+          data: { reason: costResult.reason },
+        });
       } else {
         run.modelCalls.push(response);
         run.totalCost += response.cost;
         run.totalTokens += response.inputTokens + response.outputTokens;
         run.output = response.content;
         run.status = 'complete';
-        
+
         // Extract artifacts from response
         run.artifacts = this.extractArtifacts(response, role);
-        
+
         // Calculate confidence
         run.confidence = this.estimateConfidence(response, role);
       }
-
     } catch (error) {
       run.status = 'failed';
       run.errors.push({
         timestamp: new Date().toISOString(),
         message: error instanceof Error ? error.message : 'Unknown error',
         type: 'model',
-        recoverable: true
+        recoverable: true,
       });
-      
+
       // Update circuit breaker
       this.recordFailure(agentId);
-      this.emitEvent({ type: 'agent.failed', agentId, taskId, projectId, data: { error: String(error) } });
+      this.emitEvent({
+        type: 'agent.failed',
+        agentId,
+        taskId,
+        projectId,
+        data: { error: String(error) },
+      });
     }
 
     run.completedAt = new Date().toISOString();
     this.activeRuns.delete(run.id);
     this.completedRuns.push(run);
-    
-    this.emitEvent({ type: 'agent.completed', agentId, taskId, projectId, data: { status: run.status, cost: run.totalCost } });
-    
+
+    this.emitEvent({
+      type: 'agent.completed',
+      agentId,
+      taskId,
+      projectId,
+      data: { status: run.status, cost: run.totalCost },
+    });
+
     return run;
   }
 
@@ -172,16 +208,20 @@ export class AgentHarness {
     this.workflows.set(workflow.id, workflow);
     workflow.status = 'running';
     workflow.startedAt = new Date().toISOString();
-    
-    this.emitEvent({ type: 'workflow.started', projectId: workflow.projectId, data: { workflowId: workflow.id, name: workflow.name } });
+
+    this.emitEvent({
+      type: 'workflow.started',
+      projectId: workflow.projectId,
+      data: { workflowId: workflow.id, name: workflow.name },
+    });
 
     for (let i = 0; i < workflow.steps.length; i++) {
       const step = workflow.steps[i];
-      
+
       // Check dependencies
       if (step.dependsOn) {
-        const depsComplete = step.dependsOn.every(depId => {
-          const dep = workflow.steps.find(s => s.id === depId);
+        const depsComplete = step.dependsOn.every((depId) => {
+          const dep = workflow.steps.find((s) => s.id === depId);
           return dep?.status === 'complete';
         });
         if (!depsComplete) {
@@ -200,7 +240,11 @@ export class AgentHarness {
           step.agentRole,
           workflow.id,
           workflow.projectId,
-          step.input || workflow.steps.slice(0, i).map(s => s.output || '').join('\n\n')
+          step.input ||
+            workflow.steps
+              .slice(0, i)
+              .map((s) => s.output || '')
+              .join('\n\n')
         );
 
         step.output = run.output || '';
@@ -211,7 +255,7 @@ export class AgentHarness {
           workflow.status = 'failed';
           break;
         }
-      } catch (error) {
+      } catch {
         step.status = 'failed';
         workflow.status = 'failed';
         break;
@@ -222,24 +266,34 @@ export class AgentHarness {
       workflow.status = 'complete';
     }
     workflow.completedAt = new Date().toISOString();
-    
-    this.emitEvent({ type: 'workflow.completed', projectId: workflow.projectId, data: { workflowId: workflow.id, status: workflow.status } });
-    
+
+    this.emitEvent({
+      type: 'workflow.completed',
+      projectId: workflow.projectId,
+      data: { workflowId: workflow.id, status: workflow.status },
+    });
+
     return workflow;
   }
 
   /**
    * Request human approval
    */
-  requestApproval(request: Omit<ApprovalRequest, 'id' | 'status' | 'requestedAt'>): ApprovalRequest {
+  requestApproval(
+    request: Omit<ApprovalRequest, 'id' | 'status' | 'requestedAt'>
+  ): ApprovalRequest {
     const approval: ApprovalRequest = {
       ...request,
       id: `approval-${Date.now()}`,
       status: 'pending',
-      requestedAt: new Date().toISOString()
+      requestedAt: new Date().toISOString(),
     };
     this.approvalQueue.push(approval);
-    this.emitEvent({ type: 'approval.requested', projectId: '', data: { approvalId: approval.id, type: approval.type } });
+    this.emitEvent({
+      type: 'approval.requested',
+      projectId: '',
+      data: { approvalId: approval.id, type: approval.type },
+    });
     return approval;
   }
 
@@ -247,7 +301,7 @@ export class AgentHarness {
    * Resolve an approval
    */
   resolveApproval(approvalId: string, decision: 'approved' | 'rejected', resolvedBy: string) {
-    const approval = this.approvalQueue.find(a => a.id === approvalId);
+    const approval = this.approvalQueue.find((a) => a.id === approvalId);
     if (approval) {
       approval.status = decision;
       approval.resolvedAt = new Date().toISOString();
@@ -262,14 +316,14 @@ export class AgentHarness {
     const fullRisk: Risk = {
       ...risk,
       id: `risk-${Date.now()}`,
-      detectedAt: new Date().toISOString()
+      detectedAt: new Date().toISOString(),
     };
     this.riskRegister.push(fullRisk);
     return fullRisk;
   }
 
   // --- Getters ---
-  
+
   getActiveRuns(): AgentRun[] {
     return Array.from(this.activeRuns.values());
   }
@@ -283,7 +337,7 @@ export class AgentHarness {
   }
 
   getApprovalQueue(): ApprovalRequest[] {
-    return this.approvalQueue.filter(a => a.status === 'pending');
+    return this.approvalQueue.filter((a) => a.status === 'pending');
   }
 
   getRiskRegister(): Risk[] {
@@ -322,14 +376,14 @@ export class AgentHarness {
         agentId,
         state: 'closed',
         failureCount: 0,
-        resetTimeout: 60000 // 1 minute
+        resetTimeout: 60000, // 1 minute
       };
       this.circuitBreakers.set(agentId, breaker);
     }
-    
+
     breaker.failureCount++;
     breaker.lastFailure = new Date().toISOString();
-    
+
     if (breaker.failureCount >= 3) {
       breaker.state = 'open';
       breaker.reason = `Agent ${agentId} failed ${breaker.failureCount} times`;
@@ -342,24 +396,34 @@ export class AgentHarness {
       prompt += `## Context\n${context}\n\n`;
     }
     prompt += `## Task\n${input}\n\n`;
-    
+
     if (role === 'developer') {
-      prompt += '## Instructions\nImplement the task following the context above. Output clean, production-ready code.';
+      prompt +=
+        '## Instructions\nImplement the task following the context above. Output clean, production-ready code.';
     } else if (role === 'reviewer') {
-      prompt += '## Instructions\nReview the implementation above. Provide structured feedback with severity levels.';
+      prompt +=
+        '## Instructions\nReview the implementation above. Provide structured feedback with severity levels.';
     } else if (role === 'requirements') {
-      prompt += '## Instructions\nExtract requirements, identify ambiguities, and classify information by provenance.';
+      prompt +=
+        '## Instructions\nExtract requirements, identify ambiguities, and classify information by provenance.';
     } else if (role === 'planner') {
-      prompt += '## Instructions\nCreate a detailed implementation plan with tasks, estimates, and dependencies.';
+      prompt +=
+        '## Instructions\nCreate a detailed implementation plan with tasks, estimates, and dependencies.';
     } else if (role === 'risk') {
-      prompt += '## Instructions\nIdentify risks with probability, impact, and mitigation strategies.';
+      prompt +=
+        '## Instructions\nIdentify risks with probability, impact, and mitigation strategies.';
     }
-    
+
     return prompt;
   }
 
-  private getContextTypeForRole(role: AgentRole): 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk' {
-    const mapping: Record<AgentRole, 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk'> = {
+  private getContextTypeForRole(
+    role: AgentRole
+  ): 'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk' {
+    const mapping: Record<
+      AgentRole,
+      'requirements' | 'architecture' | 'task' | 'code' | 'test' | 'decision' | 'risk'
+    > = {
       lead: 'task',
       requirements: 'requirements',
       planner: 'task',
@@ -379,13 +443,18 @@ export class AgentHarness {
       'mobile-specialist': 'code',
       'database-specialist': 'architecture',
       'api-designer': 'architecture',
-      'performance-engineer': 'code'
+      'performance-engineer': 'code',
     };
     return mapping[role] || 'task';
   }
 
-  private getModelCapabilityForRole(role: AgentRole): 'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative' {
-    const mapping: Record<AgentRole, 'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative'> = {
+  private getModelCapabilityForRole(
+    role: AgentRole
+  ): 'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative' {
+    const mapping: Record<
+      AgentRole,
+      'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative'
+    > = {
       lead: 'reasoning',
       requirements: 'reasoning',
       planner: 'planning',
@@ -405,39 +474,43 @@ export class AgentHarness {
       'mobile-specialist': 'code-generation',
       'database-specialist': 'code-generation',
       'api-designer': 'code-generation',
-      'performance-engineer': 'code-generation'
+      'performance-engineer': 'code-generation',
     };
     return mapping[role] || 'reasoning';
   }
 
   private extractArtifacts(response: ModelResponse, role: AgentRole): AgentArtifact[] {
     const artifacts: AgentArtifact[] = [];
-    
+
     try {
       // Try to parse as JSON
       const parsed = JSON.parse(response.content);
       artifacts.push({
         type: this.getArtifactTypeForRole(role),
         content: response.content,
-        metadata: { parsed: true, structure: Object.keys(parsed) }
+        metadata: { parsed: true, structure: Object.keys(parsed) },
       });
     } catch {
       // Not JSON — treat as code or text
-      if (response.content.includes('```') || response.content.includes('function') || response.content.includes('import')) {
+      if (
+        response.content.includes('```') ||
+        response.content.includes('function') ||
+        response.content.includes('import')
+      ) {
         artifacts.push({
           type: 'code',
           content: response.content,
-          metadata: { format: 'code' }
+          metadata: { format: 'code' },
         });
       } else {
         artifacts.push({
           type: this.getArtifactTypeForRole(role),
           content: response.content,
-          metadata: { format: 'text' }
+          metadata: { format: 'text' },
         });
       }
     }
-    
+
     return artifacts;
   }
 
@@ -462,7 +535,7 @@ export class AgentHarness {
       'mobile-specialist': 'code',
       'database-specialist': 'code',
       'api-designer': 'code',
-      'performance-engineer': 'review'
+      'performance-engineer': 'review',
     };
     return mapping[role] || 'decision';
   }
@@ -470,10 +543,10 @@ export class AgentHarness {
   private estimateConfidence(response: ModelResponse, role: AgentRole): number {
     // Heuristic confidence estimation
     let confidence = 0.7; // Base confidence
-    
+
     if (response.content.length > 500) confidence += 0.1;
     if (response.finishReason === 'stop') confidence += 0.05;
-    
+
     try {
       JSON.parse(response.content);
       confidence += 0.1; // Structured output = higher confidence
@@ -492,7 +565,7 @@ export class AgentHarness {
     this.eventLog.push({
       ...event,
       id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }

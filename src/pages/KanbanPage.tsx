@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KanbanBoard, KanbanColumn, KanbanTask } from '../components/KanbanBoard';
+import { KanbanBoard, KanbanColumn } from '../components/KanbanBoard';
 import { UndoRedoPanel } from '../components/UndoRedoPanel';
 import { useUndoRedo, createMoveTaskCommand } from '../hooks/useUndoRedo';
 import { Plus, Filter, Search } from 'lucide-react';

@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ExecutionEngine } from '../engine/execution/ExecutionEngine';
 import { Worktree, TestSuiteResult } from '../engine/execution/types';
-import { 
-  Folder, 
-  File, 
-  GitBranch, 
-  GitCommit, 
-  Play, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Folder,
+  File,
+  GitBranch,
+  GitCommit,
+  Play,
+  CheckCircle2,
+  XCircle,
   Clock,
   Plus,
   Trash2,
   RefreshCw,
   Code,
-  Terminal
+  Terminal,
 } from 'lucide-react';
 
 export function ExecutionDashboard() {
@@ -28,14 +28,14 @@ export function ExecutionDashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [commandOutput, setCommandOutput] = useState<string>('');
 
-  useEffect(() => {
-    loadWorktrees();
-  }, []);
-
-  const loadWorktrees = async () => {
+  const loadWorktrees = useCallback(async () => {
     const wt = await engine.listWorktrees();
     setWorktrees(wt);
-  };
+  }, [engine]);
+
+  useEffect(() => {
+    loadWorktrees();
+  }, [loadWorktrees]);
 
   const createWorktree = async () => {
     const id = `wt-${Date.now()}`;
@@ -69,7 +69,7 @@ export function ExecutionDashboard() {
     if (!selectedWorktree) return;
     const fileName = prompt('Enter file path (e.g., src/new-file.ts):');
     if (!fileName) return;
-    
+
     await engine.writeFile(selectedWorktree, fileName, '// New file\n');
     const fileList = await engine.listFiles(selectedWorktree);
     setFiles(fileList);
@@ -79,7 +79,7 @@ export function ExecutionDashboard() {
   const deleteFile = async () => {
     if (!selectedWorktree || !selectedFile) return;
     if (!confirm(`Delete ${selectedFile}?`)) return;
-    
+
     await engine.deleteFile(selectedWorktree, selectedFile);
     const fileList = await engine.listFiles(selectedWorktree);
     setFiles(fileList);
@@ -92,17 +92,17 @@ export function ExecutionDashboard() {
     if (!selectedWorktree) return;
     setIsRunning(true);
     setCommandOutput('Running tests...\n');
-    
+
     const results = await engine.runTests(selectedWorktree);
     setTestResults(results);
-    
+
     let output = `Test Results:\n`;
     output += `Suite: ${results.suite}\n`;
     output += `Passed: ${results.passed}\n`;
     output += `Failed: ${results.failed}\n`;
     output += `Skipped: ${results.skipped}\n`;
     output += `Duration: ${results.duration}ms\n\n`;
-    
+
     for (const test of results.tests) {
       const icon = test.status === 'pass' ? '✓' : test.status === 'fail' ? '✗' : '○';
       output += `${icon} ${test.name} (${test.duration}ms)\n`;
@@ -110,7 +110,7 @@ export function ExecutionDashboard() {
         output += `  Error: ${test.error}\n`;
       }
     }
-    
+
     setCommandOutput(output);
     setIsRunning(false);
   };
@@ -119,15 +119,15 @@ export function ExecutionDashboard() {
     if (!selectedWorktree) return;
     setIsRunning(true);
     setCommandOutput('Building project...\n');
-    
+
     const result = await engine.build(selectedWorktree);
-    
+
     let output = `Build Result:\n`;
     output += `Status: ${result.success ? 'SUCCESS' : 'FAILED'}\n`;
     output += `Exit Code: ${result.exitCode}\n`;
     output += `Duration: ${result.duration}ms\n\n`;
     output += result.output || result.error || '';
-    
+
     setCommandOutput(output);
     setIsRunning(false);
   };
@@ -136,15 +136,15 @@ export function ExecutionDashboard() {
     if (!selectedWorktree) return;
     setIsRunning(true);
     setCommandOutput('Linting project...\n');
-    
+
     const result = await engine.lint(selectedWorktree);
-    
+
     let output = `Lint Result:\n`;
     output += `Status: ${result.success ? 'SUCCESS' : 'FAILED'}\n`;
     output += `Exit Code: ${result.exitCode}\n`;
     output += `Duration: ${result.duration}ms\n\n`;
     output += result.output || result.error || '';
-    
+
     setCommandOutput(output);
     setIsRunning(false);
   };
@@ -153,7 +153,7 @@ export function ExecutionDashboard() {
     if (!selectedWorktree) return;
     const message = prompt('Enter commit message:');
     if (!message) return;
-    
+
     const commit = await engine.commit(selectedWorktree, message, 'AI Agent');
     setCommandOutput(`✓ Committed: ${commit.hash.substring(0, 7)} - ${message}`);
   };
@@ -187,12 +187,12 @@ export function ExecutionDashboard() {
                 <Plus size={14} className="text-white" />
               </button>
             </div>
-            
+
             <div className="space-y-2">
               {worktrees.length === 0 ? (
                 <p className="text-xs text-slate-500">No worktrees yet. Create one to start.</p>
               ) : (
-                worktrees.map(wt => (
+                worktrees.map((wt) => (
                   <button
                     key={wt.id}
                     onClick={() => selectWorktree(wt.id)}
@@ -204,7 +204,8 @@ export function ExecutionDashboard() {
                   >
                     <div className="text-xs text-white font-medium">{wt.branch}</div>
                     <div className="text-xs text-slate-400 mt-0.5">
-                      {wt.commits.length} commit(s) • Created {new Date(wt.createdAt).toLocaleTimeString()}
+                      {wt.commits.length} commit(s) • Created{' '}
+                      {new Date(wt.createdAt).toLocaleTimeString()}
                     </div>
                   </button>
                 ))
@@ -279,12 +280,12 @@ export function ExecutionDashboard() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1 max-h-96 overflow-y-auto">
                   {files.length === 0 ? (
                     <p className="text-xs text-slate-500">No files yet.</p>
                   ) : (
-                    files.map(file => (
+                    files.map((file) => (
                       <button
                         key={file}
                         onClick={() => selectFile(file)}
@@ -325,7 +326,7 @@ export function ExecutionDashboard() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <textarea
                     value={fileContent}
                     onChange={(e) => setFileContent(e.target.value)}
@@ -351,7 +352,7 @@ export function ExecutionDashboard() {
                 <CheckCircle2 size={16} className="text-green-400" />
                 Test Results
               </h2>
-              
+
               <div className="grid grid-cols-3 gap-2 mb-3">
                 <div className="bg-success/10 rounded-lg p-2 text-center">
                   <div className="text-lg font-bold text-success">{testResults.passed}</div>
@@ -367,9 +368,7 @@ export function ExecutionDashboard() {
                 </div>
               </div>
 
-              <div className="text-xs text-slate-400 mb-2">
-                Duration: {testResults.duration}ms
-              </div>
+              <div className="text-xs text-slate-400 mb-2">Duration: {testResults.duration}ms</div>
 
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {testResults.tests.map((test, i) => (
@@ -384,9 +383,7 @@ export function ExecutionDashboard() {
                     <div className="flex-1">
                       <div className="text-slate-300">{test.name}</div>
                       <div className="text-slate-500">{test.duration}ms</div>
-                      {test.error && (
-                        <div className="text-danger mt-1">{test.error}</div>
-                      )}
+                      {test.error && <div className="text-danger mt-1">{test.error}</div>}
                     </div>
                   </div>
                 ))}
@@ -400,7 +397,7 @@ export function ExecutionDashboard() {
               <Terminal size={16} className="text-green-400" />
               Output
             </h2>
-            
+
             <div className="bg-dark-900 rounded-lg p-3 font-mono text-xs max-h-96 overflow-y-auto">
               {commandOutput ? (
                 <pre className="text-slate-300 whitespace-pre-wrap">{commandOutput}</pre>

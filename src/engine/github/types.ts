@@ -78,12 +78,12 @@ export interface GitHubPullRequest {
   createdAt: string;
   updatedAt: string;
   mergedAt?: string;
-  mergeable: boolean;
-  mergeableState: string;
-  commits: number;
-  additions: number;
-  deletions: number;
-  changedFiles: number;
+  mergeable?: boolean | null;
+  mergeableState?: string;
+  commits?: number;
+  additions?: number;
+  deletions?: number;
+  changedFiles?: number;
 }
 
 export interface GitHubIssue {
@@ -150,7 +150,8 @@ export interface GitHubIntegrationState {
 // DELIVERY PIPELINE TYPES
 // ============================================================
 
-export type PRStatus = 'draft' | 'open' | 'review' | 'approved' | 'changes_requested' | 'merged' | 'closed';
+export type PRStatus =
+  'draft' | 'open' | 'review' | 'approved' | 'changes_requested' | 'merged' | 'closed';
 export type CheckStatus = 'pending' | 'success' | 'failure' | 'skipped';
 export type ReviewState = 'approved' | 'changes_requested' | 'commented' | 'pending';
 

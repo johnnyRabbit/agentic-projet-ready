@@ -18,10 +18,9 @@ export class WebhookHandler {
    * Register event handler
    */
   on(event: string, handler: WebhookEventHandler): void {
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, []);
-    }
-    this.handlers.get(event)!.push(handler);
+    const handlers = this.handlers.get(event) ?? [];
+    handlers.push(handler);
+    this.handlers.set(event, handlers);
   }
 
   /**
@@ -52,12 +51,12 @@ export class WebhookHandler {
 
     try {
       const data: GitHubWebhookPayload = JSON.parse(payload);
-      
+
       // Call all handlers for this event
       const handlers = this.handlers.get(event) || [];
       const allHandlers = [
         ...handlers,
-        ...(this.handlers.get('*') || []) // Wildcard handlers
+        ...(this.handlers.get('*') || []), // Wildcard handlers
       ];
 
       for (const handler of allHandlers) {
@@ -67,9 +66,9 @@ export class WebhookHandler {
       return { success: true };
     } catch (error) {
       console.error('Webhook handler error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -103,9 +102,7 @@ export class WebhookHandler {
 
     const signatureBuffer = await crypto.subtle.sign('HMAC', key, messageData);
     const signatureArray = Array.from(new Uint8Array(signatureBuffer));
-    const computedHash = signatureArray
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    const computedHash = signatureArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
     return computedHash === hash;
   }
@@ -182,7 +179,7 @@ export const WEBHOOK_EVENTS = {
   INSTALLATION_UNSUSPEND: 'installation.unsuspend',
 
   // Wildcard
-  ALL: '*'
+  ALL: '*',
 } as const;
 
-export type WebhookEventType = typeof WEBHOOK_EVENTS[keyof typeof WEBHOOK_EVENTS];
+export type WebhookEventType = (typeof WEBHOOK_EVENTS)[keyof typeof WEBHOOK_EVENTS];

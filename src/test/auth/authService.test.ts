@@ -66,7 +66,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: 'wrongpassword',
       })
-    ).rejects.toThrow('Invalid credentials');
+    ).rejects.toThrow('Invalid email or password');
   });
 
   it('should not login with non-existent user', async () => {
@@ -75,7 +75,7 @@ describe('AuthService', () => {
         email: 'nonexistent@example.com',
         password: 'password123',
       })
-    ).rejects.toThrow('Invalid credentials');
+    ).rejects.toThrow('Invalid email or password');
   });
 
   it('should get current session', async () => {
@@ -162,5 +162,26 @@ describe('AuthService', () => {
     const newSession = await authService.refreshSession();
     expect(newSession).toBeDefined();
     expect(newSession?.token).toBeDefined();
+  });
+
+  it('preserves the password across repeated logins and keeps it out of the session profile', async () => {
+    await authService.register({
+      email: 'repeat@example.com',
+      password: 'correct-password',
+      name: 'Repeat',
+    });
+    await authService.logout();
+    await authService.login({ email: 'repeat@example.com', password: 'correct-password' });
+    await authService.logout();
+    await expect(
+      authService.login({ email: 'repeat@example.com', password: 'wrong-password' })
+    ).rejects.toThrow('Invalid email or password');
+    const result = await authService.login({
+      email: 'repeat@example.com',
+      password: 'correct-password',
+    });
+    expect(result.user).not.toHaveProperty('password');
+    expect(await authService.getCurrentUser()).toEqual(result.user);
+    expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}')).not.toHaveProperty('password');
   });
 });

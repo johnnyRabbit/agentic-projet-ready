@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PerformanceMonitor } from '../../observability/PerformanceMonitor';
 
 describe('PerformanceMonitor', () => {
@@ -7,6 +7,8 @@ describe('PerformanceMonitor', () => {
   beforeEach(() => {
     monitor = new PerformanceMonitor();
   });
+
+  afterEach(() => vi.restoreAllMocks());
 
   it('should record a metric', () => {
     const metric = monitor.record('load-time', 150, 'ms', {
@@ -118,14 +120,10 @@ describe('PerformanceMonitor', () => {
   });
 
   it('should start and stop timer', () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(100);
     const endTimer = monitor.startTimer('operation');
-    
-    // Simulate some work
-    const start = Date.now();
-    while (Date.now() - start < 10) {
-      // Wait 10ms
-    }
-    
+    clock.mockReturnValue(110);
+
     const metric = endTimer();
     expect(metric.name).toBe('operation');
     expect(metric.value).toBeGreaterThanOrEqual(10);
@@ -133,13 +131,15 @@ describe('PerformanceMonitor', () => {
   });
 
   it('should measure async function', async () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(100);
     const result = await monitor.measure('async-operation', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await Promise.resolve();
+      clock.mockReturnValue(110);
       return 'result';
     });
 
     expect(result).toBe('result');
-    
+
     const metrics = monitor.getByName('async-operation');
     expect(metrics.length).toBe(1);
     expect(metrics[0].value).toBeGreaterThanOrEqual(10);
@@ -151,7 +151,7 @@ describe('PerformanceMonitor', () => {
     monitor.recordWebVitals({ fcp: 1000 });
 
     monitor.clear();
-    
+
     expect(monitor.getAll().length).toBe(0);
     expect(Object.keys(monitor.getWebVitals()).length).toBe(0);
   });
@@ -176,17 +176,20 @@ describe('PerformanceMonitor', () => {
     const exported = monitor.export();
     expect(exported).toBeDefined();
     expect(typeof exported).toBe('string');
-    
+
     const parsed = JSON.parse(exported);
     expect(parsed.metrics).toBeDefined();
     expect(parsed.webVitals).toBeDefined();
-    expect(parsed.metrics.length).toBe(1);
+    expect(parsed.metrics.map((metric: { name: string }) => metric.name)).toEqual([
+      'metric-1',
+      'web-vital-fcp',
+    ]);
     expect(parsed.webVitals.fcp).toBe(1000);
   });
 
   it('should limit metrics to maxMetrics', () => {
     const monitorSmall = new PerformanceMonitor();
-    (monitorSmall as any).maxMetrics = 10;
+    Reflect.set(monitorSmall, 'maxMetrics', 10);
 
     for (let i = 0; i < 20; i++) {
       monitorSmall.record('metric', i, 'ms');

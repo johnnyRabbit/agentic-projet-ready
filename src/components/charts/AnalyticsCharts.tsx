@@ -21,7 +21,7 @@ import {
 // ============================================================
 
 interface ChartProps {
-  data: any[];
+  data: Record<string, string | number>[];
   title?: string;
   height?: number;
 }

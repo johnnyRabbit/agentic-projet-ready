@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 import { useState, useEffect, useRef } from 'react';
 import { Search, Command, X } from 'lucide-react';
 
@@ -29,51 +30,51 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       label: 'Ir para Dashboard',
       description: 'Abrir o painel principal',
       shortcut: 'G D',
-      action: () => window.location.hash = '#/dashboard',
-      category: 'Navegação'
+      action: () => (window.location.hash = '#/dashboard'),
+      category: 'Navegação',
     },
     {
       id: 'nav-projects',
       label: 'Ir para Projetos',
       description: 'Ver todos os projetos',
       shortcut: 'G P',
-      action: () => window.location.hash = '#/projects',
-      category: 'Navegação'
+      action: () => (window.location.hash = '#/projects'),
+      category: 'Navegação',
     },
     {
       id: 'nav-agents',
       label: 'Ir para Agentes',
       description: 'Gerenciar agentes de IA',
       shortcut: 'G A',
-      action: () => window.location.hash = '#/agents',
-      category: 'Navegação'
+      action: () => (window.location.hash = '#/agents'),
+      category: 'Navegação',
     },
-    
+
     // Ações
     {
       id: 'action-new-project',
       label: 'Novo Projeto',
       description: 'Criar um novo projeto',
       shortcut: '⌘ N',
-      action: () => console.log('New project'),
-      category: 'Ações'
+      action: () => logger.debug('New project'),
+      category: 'Ações',
     },
     {
       id: 'action-new-task',
       label: 'Nova Tarefa',
       description: 'Criar uma nova tarefa',
       shortcut: '⌘ T',
-      action: () => console.log('New task'),
-      category: 'Ações'
+      action: () => logger.debug('New task'),
+      category: 'Ações',
     },
     {
       id: 'action-run-agent',
       label: 'Executar Agente',
       description: 'Iniciar um agente de IA',
-      action: () => console.log('Run agent'),
-      category: 'Ações'
+      action: () => logger.debug('Run agent'),
+      category: 'Ações',
     },
-    
+
     // Configurações
     {
       id: 'settings-theme',
@@ -83,49 +84,52 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         const html = document.documentElement;
         html.classList.toggle('dark');
       },
-      category: 'Configurações'
+      category: 'Configurações',
     },
     {
       id: 'settings-preferences',
       label: 'Preferências',
       description: 'Abrir configurações',
-      action: () => console.log('Open preferences'),
-      category: 'Configurações'
+      action: () => logger.debug('Open preferences'),
+      category: 'Configurações',
     },
-    
+
     // Ajuda
     {
       id: 'help-shortcuts',
       label: 'Atalhos de Teclado',
       description: 'Ver todos os atalhos disponíveis',
       shortcut: '?',
-      action: () => console.log('Show shortcuts'),
-      category: 'Ajuda'
+      action: () => logger.debug('Show shortcuts'),
+      category: 'Ajuda',
     },
     {
       id: 'help-docs',
       label: 'Documentação',
       description: 'Abrir documentação',
       action: () => window.open('https://docs.example.com', '_blank'),
-      category: 'Ajuda'
-    }
+      category: 'Ajuda',
+    },
   ];
 
   // Filtrar comandos baseado na query
-  const filteredCommands = commands.filter(cmd => {
+  const filteredCommands = commands.filter((cmd) => {
     const searchStr = `${cmd.label} ${cmd.description || ''} ${cmd.category || ''}`.toLowerCase();
     return searchStr.includes(query.toLowerCase());
   });
 
   // Agrupar por categoria
-  const groupedCommands = filteredCommands.reduce((acc, cmd) => {
-    const category = cmd.category || 'Outros';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(cmd);
-    return acc;
-  }, {} as Record<string, CommandItem[]>);
+  const groupedCommands = filteredCommands.reduce(
+    (acc, cmd) => {
+      const category = cmd.category || 'Outros';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(cmd);
+      return acc;
+    },
+    {} as Record<string, CommandItem[]>
+  );
 
   // Resetar seleção quando query mudar
   useEffect(() => {
@@ -146,10 +150,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => Math.min(prev + 1, filteredCommands.length - 1));
+      setSelectedIndex((prev) => Math.min(prev + 1, filteredCommands.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => Math.max(prev - 1, 0));
+      setSelectedIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredCommands[selectedIndex]) {
@@ -166,11 +170,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative w-full max-w-2xl bg-dark-800 rounded-xl border border-dark-500 shadow-2xl">
         {/* Input */}
@@ -185,10 +186,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             placeholder="Digite um comando ou busque..."
             className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none"
           />
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-dark-700 rounded transition-colors"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-dark-700 rounded transition-colors">
             <X className="w-4 h-4 text-slate-400" />
           </button>
         </div>
@@ -196,16 +194,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {filteredCommands.length === 0 ? (
-            <div className="py-12 text-center text-slate-500">
-              Nenhum comando encontrado
-            </div>
+            <div className="py-12 text-center text-slate-500">Nenhum comando encontrado</div>
           ) : (
             Object.entries(groupedCommands).map(([category, cmds]) => (
               <div key={category} className="mb-4">
                 <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
                   {category}
                 </div>
-                {cmds.map((cmd, idx) => {
+                {cmds.map((cmd) => {
                   const globalIndex = filteredCommands.indexOf(cmd);
                   return (
                     <button
@@ -274,7 +270,7 @@ export function useCommandPalette() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsOpen(prev => !prev);
+        setIsOpen((prev) => !prev);
       }
     };
 
@@ -286,6 +282,6 @@ export function useCommandPalette() {
     isOpen,
     open: () => setIsOpen(true),
     close: () => setIsOpen(false),
-    toggle: () => setIsOpen(prev => !prev)
+    toggle: () => setIsOpen((prev) => !prev),
   };
 }

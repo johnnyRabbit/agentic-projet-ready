@@ -1,16 +1,14 @@
 import { mockPR, mockDecisions, mockQuestions } from '../data/mockData';
-import { 
-  GitPullRequest, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
+import {
+  GitPullRequest,
+  CheckCircle2,
   AlertTriangle,
   Shield,
   Scale,
   MessageSquare,
   ExternalLink,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
 } from 'lucide-react';
 
 export function Reviews() {
@@ -18,7 +16,9 @@ export function Reviews() {
     <div className="p-8 max-w-[1200px] mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Reviews & Approvals</h1>
-        <p className="text-slate-400 text-sm mt-1">Items requiring your attention as Tech Lead / CTO</p>
+        <p className="text-slate-400 text-sm mt-1">
+          Items requiring your attention as Tech Lead / CTO
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -42,19 +42,35 @@ export function Reviews() {
             {[
               { label: 'Requirements', status: 'passed', icon: <CheckCircle2 size={14} /> },
               { label: 'Implementation', status: 'passed', icon: <CheckCircle2 size={14} /> },
-              { label: 'Tests', status: 'passed', icon: <CheckCircle2 size={14} />, detail: `${mockPR.testsPassing}/${mockPR.testsTotal}` },
+              {
+                label: 'Tests',
+                status: 'passed',
+                icon: <CheckCircle2 size={14} />,
+                detail: `${mockPR.testsPassing}/${mockPR.testsTotal}`,
+              },
               { label: 'Agent Review', status: 'passed', icon: <CheckCircle2 size={14} /> },
               { label: 'Security Review', status: 'passed', icon: <CheckCircle2 size={14} /> },
               { label: 'Typecheck', status: 'passed', icon: <CheckCircle2 size={14} /> },
               { label: 'Lint', status: 'passed', icon: <CheckCircle2 size={14} /> },
               { label: 'Risk', status: mockPR.risk, icon: <Shield size={14} /> },
             ].map((item, i) => (
-              <div key={i} className={`bg-dark-700 rounded-lg p-3 flex items-center gap-2 ${
-                item.status === 'passed' ? 'border border-success/20' :
-                item.status === 'low' ? 'border border-success/20' :
-                'border border-warning/20'
-              }`}>
-                <span className={item.status === 'passed' || item.status === 'low' ? 'text-success' : 'text-warning'}>
+              <div
+                key={i}
+                className={`bg-dark-700 rounded-lg p-3 flex items-center gap-2 ${
+                  item.status === 'passed'
+                    ? 'border border-success/20'
+                    : item.status === 'low'
+                      ? 'border border-success/20'
+                      : 'border border-warning/20'
+                }`}
+              >
+                <span
+                  className={
+                    item.status === 'passed' || item.status === 'low'
+                      ? 'text-success'
+                      : 'text-warning'
+                  }
+                >
                   {item.icon}
                 </span>
                 <div>
@@ -126,37 +142,43 @@ export function Reviews() {
             <Scale size={18} className="text-warning" />
             <h2 className="text-sm font-semibold text-white">Decisions Requiring Review</h2>
             <span className="bg-warning/20 text-warning text-xs px-2 py-0.5 rounded-full ml-2">
-              {mockDecisions.filter(d => d.status === 'escalated').length}
+              {mockDecisions.filter((d) => d.status === 'escalated').length}
             </span>
           </div>
           <div className="space-y-3">
-            {mockDecisions.filter(d => d.status === 'escalated').map(decision => (
-              <div key={decision.id} className="bg-dark-700 rounded-lg p-4 border border-warning/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-white">{decision.title}</h3>
-                  <span className="text-xs text-warning">Needs Decision</span>
+            {mockDecisions
+              .filter((d) => d.status === 'escalated')
+              .map((decision) => (
+                <div
+                  key={decision.id}
+                  className="bg-dark-700 rounded-lg p-4 border border-warning/20"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-white">{decision.title}</h3>
+                    <span className="text-xs text-warning">Needs Decision</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-3">{decision.context}</p>
+                  <div className="space-y-1.5 mb-3">
+                    {decision.agents.map((agent, i) => (
+                      <div key={i} className="text-xs text-slate-300 bg-dark-600 rounded p-2">
+                        <span className="text-indigo-300 font-medium">{agent.name}:</span>{' '}
+                        {agent.position}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="bg-success/20 hover:bg-success/30 text-success px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                      Option A
+                    </button>
+                    <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
+                      Option B
+                    </button>
+                    <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
+                      Custom Decision
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400 mb-3">{decision.context}</p>
-                <div className="space-y-1.5 mb-3">
-                  {decision.agents.map((agent, i) => (
-                    <div key={i} className="text-xs text-slate-300 bg-dark-600 rounded p-2">
-                      <span className="text-indigo-300 font-medium">{agent.name}:</span> {agent.position}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <button className="bg-success/20 hover:bg-success/30 text-success px-3 py-1.5 rounded text-xs font-medium transition-colors">
-                    Option A
-                  </button>
-                  <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
-                    Option B
-                  </button>
-                  <button className="bg-dark-600 hover:bg-dark-500 text-white px-3 py-1.5 rounded text-xs font-medium border border-dark-400">
-                    Custom Decision
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
@@ -166,33 +188,44 @@ export function Reviews() {
             <MessageSquare size={18} className="text-info" />
             <h2 className="text-sm font-semibold text-white">Blocking Questions</h2>
             <span className="bg-info/20 text-info text-xs px-2 py-0.5 rounded-full ml-2">
-              {mockQuestions.filter(q => q.status === 'open' && q.priority === 'blocking').length}
+              {mockQuestions.filter((q) => q.status === 'open' && q.priority === 'blocking').length}
             </span>
           </div>
           <div className="space-y-3">
-            {mockQuestions.filter(q => q.status === 'open').map(q => (
-              <div key={q.id} className="bg-dark-700 rounded-lg p-4 border border-dark-500">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    q.priority === 'blocking' ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning'
-                  }`}>{q.priority.toUpperCase()}</span>
-                  <span className="text-xs text-slate-400">Confidence: {q.confidence}%</span>
-                </div>
-                <p className="text-sm text-slate-300 mb-3">{q.text}</p>
-                <div className="flex flex-wrap gap-2">
-                  {q.options.map((opt, i) => (
-                    <button key={i} className="bg-dark-600 hover:bg-dark-500 text-slate-300 hover:text-white px-3 py-1.5 rounded text-xs border border-dark-400 transition-colors">
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-                {q.recommendation && (
-                  <div className="mt-3 text-xs text-indigo-300 bg-indigo-500/10 rounded p-2">
-                    💡 AI recommends: {q.recommendation}
+            {mockQuestions
+              .filter((q) => q.status === 'open')
+              .map((q) => (
+                <div key={q.id} className="bg-dark-700 rounded-lg p-4 border border-dark-500">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        q.priority === 'blocking'
+                          ? 'bg-danger/20 text-danger'
+                          : 'bg-warning/20 text-warning'
+                      }`}
+                    >
+                      {q.priority.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-slate-400">Confidence: {q.confidence}%</span>
                   </div>
-                )}
-              </div>
-            ))}
+                  <p className="text-sm text-slate-300 mb-3">{q.text}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {q.options.map((opt, i) => (
+                      <button
+                        key={i}
+                        className="bg-dark-600 hover:bg-dark-500 text-slate-300 hover:text-white px-3 py-1.5 rounded text-xs border border-dark-400 transition-colors"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  {q.recommendation && (
+                    <div className="mt-3 text-xs text-indigo-300 bg-indigo-500/10 rounded p-2">
+                      💡 AI recommends: {q.recommendation}
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
         </div>
       </div>

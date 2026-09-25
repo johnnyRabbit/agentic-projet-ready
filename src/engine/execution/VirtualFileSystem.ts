@@ -6,6 +6,10 @@
 
 import { FileNode } from './types';
 
+interface SerializedFileNode extends Omit<FileNode, 'children'> {
+  children?: Record<string, SerializedFileNode>;
+}
+
 export class VirtualFileSystem {
   private root: FileNode;
 
@@ -32,18 +36,19 @@ export class VirtualFileSystem {
    */
   async writeFile(path: string, content: string): Promise<void> {
     const parts = this.parsePath(path);
-    const fileName = parts.pop()!;
-    
+    const fileName = parts.pop();
+    if (!fileName) throw new Error('File path must not be empty');
+
     // Ensure parent directory exists
     let current = this.root;
     for (const dir of parts) {
       if (!current.children) {
         current.children = new Map();
       }
-      if (!current.children.has(dir)) {
-        current.children.set(dir, this.createDirectory(dir));
-      }
-      current = current.children.get(dir)!;
+      const child = current.children.get(dir) ?? this.createDirectory(dir);
+      if (child.type !== 'directory') throw new Error(`Not a directory: ${dir}`);
+      current.children.set(dir, child);
+      current = child;
     }
 
     // Create or update file
@@ -52,8 +57,9 @@ export class VirtualFileSystem {
     }
 
     const now = new Date().toISOString();
-    if (current.children.has(fileName)) {
-      const existing = current.children.get(fileName)!;
+    const existing = current.children.get(fileName);
+    if (existing) {
+      if (existing.type !== 'file') throw new Error(`Not a file: ${path}`);
       existing.content = content;
       existing.modifiedAt = now;
     } else {
@@ -62,7 +68,7 @@ export class VirtualFileSystem {
         type: 'file',
         content,
         createdAt: now,
-        modifiedAt: now
+        modifiedAt: now,
       });
     }
   }
@@ -72,8 +78,9 @@ export class VirtualFileSystem {
    */
   async deleteFile(path: string): Promise<void> {
     const parts = this.parsePath(path);
-    const fileName = parts.pop()!;
-    
+    const fileName = parts.pop();
+    if (!fileName) throw new Error('File path must not be empty');
+
     const parent = this.getNode(parts.join('/'));
     if (!parent || !parent.children) {
       throw new Error(`Parent directory not found: ${parts.join('/')}`);
@@ -103,7 +110,7 @@ export class VirtualFileSystem {
       for (const [name, child] of node.children) {
         const fullPath = path ? `${path}/${name}` : name;
         files.push(fullPath);
-        
+
         // Recursively list subdirectories
         if (child.type === 'directory') {
           const subFiles = await this.listFiles(fullPath);
@@ -134,10 +141,9 @@ export class VirtualFileSystem {
     let current = this.root;
 
     for (const part of parts) {
-      if (!current.children || !current.children.has(part)) {
-        return null;
-      }
-      current = current.children.get(part)!;
+      const child = current.children?.get(part);
+      if (!child) return null;
+      current = child;
     }
 
     return current;
@@ -177,7 +183,7 @@ export class VirtualFileSystem {
   // --- Private helpers ---
 
   private parsePath(path: string): string[] {
-    return path.split('/').filter(p => p && p !== '.' && p !== '..');
+    return path.split('/').filter((p) => p && p !== '.' && p !== '..');
   }
 
   private createDirectory(name: string): FileNode {
@@ -187,7 +193,7 @@ export class VirtualFileSystem {
       type: 'directory',
       children: new Map(),
       createdAt: now,
-      modifiedAt: now
+      modifiedAt: now,
     };
   }
 
@@ -197,7 +203,7 @@ export class VirtualFileSystem {
       type: node.type,
       content: node.content,
       createdAt: node.createdAt,
-      modifiedAt: node.modifiedAt
+      modifiedAt: node.modifiedAt,
     };
 
     if (node.children) {
@@ -210,13 +216,13 @@ export class VirtualFileSystem {
     return cloned;
   }
 
-  private serializeNode(node: FileNode): any {
-    const result: any = {
+  private serializeNode(node: FileNode): SerializedFileNode {
+    const result: SerializedFileNode = {
       name: node.name,
       type: node.type,
       content: node.content,
       createdAt: node.createdAt,
-      modifiedAt: node.modifiedAt
+      modifiedAt: node.modifiedAt,
     };
 
     if (node.children) {
@@ -229,13 +235,13 @@ export class VirtualFileSystem {
     return result;
   }
 
-  private deserializeNode(data: any): FileNode {
+  private deserializeNode(data: SerializedFileNode): FileNode {
     const node: FileNode = {
       name: data.name,
       type: data.type,
       content: data.content,
       createdAt: data.createdAt,
-      modifiedAt: data.modifiedAt
+      modifiedAt: data.modifiedAt,
     };
 
     if (data.children) {

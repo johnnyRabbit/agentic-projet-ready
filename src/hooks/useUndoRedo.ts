@@ -154,10 +154,10 @@ export function useUndoRedo() {
 }
 
 // Command Creators
-export const createAddTaskCommand = (
-  addTask: (task: any) => void,
+export const createAddTaskCommand = <T extends { id: string; title: string }>(
+  addTask: (task: T) => void,
   removeTask: (taskId: string) => void,
-  task: any
+  task: T
 ): Omit<Command, 'id' | 'timestamp'> => ({
   type: 'add-task',
   description: `Add task: ${task.title}`,
@@ -165,11 +165,11 @@ export const createAddTaskCommand = (
   undo: () => removeTask(task.id),
 });
 
-export const createUpdateTaskCommand = (
-  updateTask: (taskId: string, updates: any) => void,
+export const createUpdateTaskCommand = <T extends { title: string }>(
+  updateTask: (taskId: string, updates: T) => void,
   taskId: string,
-  oldTask: any,
-  newTask: any
+  oldTask: T,
+  newTask: T
 ): Omit<Command, 'id' | 'timestamp'> => ({
   type: 'update-task',
   description: `Update task: ${newTask.title}`,
@@ -177,10 +177,10 @@ export const createUpdateTaskCommand = (
   undo: () => updateTask(taskId, oldTask),
 });
 
-export const createDeleteTaskCommand = (
-  addTask: (task: any) => void,
+export const createDeleteTaskCommand = <T extends { id: string; title: string }>(
+  addTask: (task: T) => void,
   removeTask: (taskId: string) => void,
-  task: any
+  task: T
 ): Omit<Command, 'id' | 'timestamp'> => ({
   type: 'delete-task',
   description: `Delete task: ${task.title}`,

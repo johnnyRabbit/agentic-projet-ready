@@ -22,8 +22,10 @@ export class GitManager {
   ): Promise<Worktree> {
     // Get base filesystem or create empty one
     let baseFs: VirtualFileSystem;
-    if (baseWorktreeId && this.fileSystems.has(baseWorktreeId)) {
-      baseFs = this.fileSystems.get(baseWorktreeId)!.clone();
+    if (baseWorktreeId && this.fileSystems.get(baseWorktreeId)) {
+      const existingFs = this.fileSystems.get(baseWorktreeId);
+      if (!existingFs) throw new Error('Base worktree not found');
+      baseFs = existingFs.clone();
     } else {
       baseFs = new VirtualFileSystem();
       // Initialize with basic project structure
@@ -41,9 +43,9 @@ export class GitManager {
         type: 'directory',
         children: new Map(),
         createdAt: new Date().toISOString(),
-        modifiedAt: new Date().toISOString()
+        modifiedAt: new Date().toISOString(),
       },
-      commits: []
+      commits: [],
     };
 
     this.worktrees.set(id, worktree);
@@ -84,11 +86,7 @@ export class GitManager {
   /**
    * Commit changes in worktree
    */
-  async commit(
-    worktreeId: string,
-    message: string,
-    author: string
-  ): Promise<GitCommit> {
+  async commit(worktreeId: string, message: string, author: string): Promise<GitCommit> {
     const worktree = this.worktrees.get(worktreeId);
     const fs = this.fileSystems.get(worktreeId);
 
@@ -98,7 +96,7 @@ export class GitManager {
 
     // Get all files
     const allFiles = await fs.listFiles();
-    
+
     // Generate commit hash
     const hash = this.generateHash();
 
@@ -107,7 +105,7 @@ export class GitManager {
       message,
       author,
       timestamp: new Date().toISOString(),
-      files: allFiles
+      files: allFiles,
     };
 
     worktree.commits.push(commit);
@@ -133,7 +131,7 @@ export class GitManager {
       modified: [],
       added: allFiles.slice(-3), // Last 3 files as "added"
       deleted: [],
-      untracked: []
+      untracked: [],
     };
   }
 
@@ -151,7 +149,7 @@ export class GitManager {
   /**
    * Get diff between commits (simulated)
    */
-  async getDiff(worktreeId: string, fromHash?: string, toHash?: string): Promise<string> {
+  async getDiff(worktreeId: string, _fromHash?: string, _toHash?: string): Promise<string> {
     const worktree = this.worktrees.get(worktreeId);
     if (!worktree) {
       throw new Error(`Worktree not found: ${worktreeId}`);
@@ -181,31 +179,48 @@ export class GitManager {
 
   private async initializeProjectStructure(fs: VirtualFileSystem): Promise<void> {
     // Create basic project structure
-    await fs.writeFile('package.json', JSON.stringify({
-      name: 'project',
-      version: '1.0.0',
-      scripts: {
-        test: 'jest',
-        build: 'tsc',
-        lint: 'eslint .'
-      }
-    }, null, 2));
+    await fs.writeFile(
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'project',
+          version: '1.0.0',
+          scripts: {
+            test: 'jest',
+            build: 'tsc',
+            lint: 'eslint .',
+          },
+        },
+        null,
+        2
+      )
+    );
 
     await fs.writeFile('README.md', '# Project\n\nAutonomous AI Engineering Team project.');
 
-    await fs.writeFile('src/index.ts', `// Main entry point
+    await fs.writeFile(
+      'src/index.ts',
+      `// Main entry point
 export function main() {
   console.log('Hello from AI Engineering Team');
 }
-`);
+`
+    );
 
-    await fs.writeFile('tsconfig.json', JSON.stringify({
-      compilerOptions: {
-        target: 'ES2020',
-        module: 'ESNext',
-        strict: true
-      }
-    }, null, 2));
+    await fs.writeFile(
+      'tsconfig.json',
+      JSON.stringify(
+        {
+          compilerOptions: {
+            target: 'ES2020',
+            module: 'ESNext',
+            strict: true,
+          },
+        },
+        null,
+        2
+      )
+    );
   }
 
   private generateHash(): string {

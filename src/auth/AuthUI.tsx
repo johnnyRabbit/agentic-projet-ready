@@ -57,7 +57,7 @@ export function AuthPage() {
       } else {
         await register(email, password, name);
       }
-    } catch (error) {
+    } catch {
       // Error is handled by store
     } finally {
       setLoading(false);
@@ -92,9 +92,7 @@ export function AuthPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Name
-                </label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
                 <div className="relative">
                   <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                   <input
@@ -110,9 +108,7 @@ export function AuthPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
@@ -127,9 +123,7 @@ export function AuthPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
@@ -180,8 +174,12 @@ export function AuthPage() {
         <div className="mt-6 p-4 bg-dark-800/50 rounded-lg border border-dark-700">
           <p className="text-xs text-slate-400 text-center mb-2">Demo Credentials</p>
           <div className="text-xs text-slate-500 text-center space-y-1">
-            <p>Email: <code className="text-indigo-400">demo@example.com</code></p>
-            <p>Password: <code className="text-indigo-400">demo123</code></p>
+            <p>
+              Email: <code className="text-indigo-400">demo@example.com</code>
+            </p>
+            <p>
+              Password: <code className="text-indigo-400">demo123</code>
+            </p>
           </div>
         </div>
       </div>
@@ -214,10 +212,7 @@ export function UserMenu() {
 
       {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-2 w-56 bg-dark-800 rounded-lg border border-dark-700 shadow-xl z-50">
             <div className="p-4 border-b border-dark-700">
               <p className="text-sm font-medium text-white">{user.name}</p>

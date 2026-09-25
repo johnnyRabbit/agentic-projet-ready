@@ -6,7 +6,7 @@
 
 import { CheckRun, CheckStatus, Review, ReviewFinding } from '../github/types';
 import { ExecutionEngine } from '../execution/ExecutionEngine';
-import { JavaScriptSandbox, ValidationResult } from '../sandbox/JavaScriptSandbox';
+import { JavaScriptSandbox } from '../sandbox/JavaScriptSandbox';
 
 export interface PipelineStage {
   name: string;
@@ -92,11 +92,11 @@ export class PipelineRunner {
    */
   private async runBuild(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       const result = await this.executionEngine.build(worktreeId);
       const completedAt = new Date().toISOString();
-      
+
       return {
         name: 'Build',
         status: result.success ? 'success' : 'failure',
@@ -104,7 +104,7 @@ export class PipelineRunner {
         completedAt,
         duration: result.duration,
         output: result.output,
-        details: result.error
+        details: result.error,
       };
     } catch (error) {
       return {
@@ -114,7 +114,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -124,14 +124,14 @@ export class PipelineRunner {
    */
   private async runTests(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       const result = await this.executionEngine.runTests(worktreeId);
       const completedAt = new Date().toISOString();
-      
+
       const output = `Tests: ${result.passed} passed, ${result.failed} failed, ${result.skipped} skipped`;
       const success = result.failed === 0;
-      
+
       return {
         name: 'Test',
         status: success ? 'success' : 'failure',
@@ -139,7 +139,7 @@ export class PipelineRunner {
         completedAt,
         duration: result.duration,
         output,
-        details: JSON.stringify(result)
+        details: JSON.stringify(result),
       };
     } catch (error) {
       return {
@@ -149,7 +149,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -159,11 +159,11 @@ export class PipelineRunner {
    */
   private async runLint(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       const result = await this.executionEngine.lint(worktreeId);
       const completedAt = new Date().toISOString();
-      
+
       return {
         name: 'Lint',
         status: result.success ? 'success' : 'failure',
@@ -171,7 +171,7 @@ export class PipelineRunner {
         completedAt,
         duration: result.duration,
         output: result.output,
-        details: result.error
+        details: result.error,
       };
     } catch (error) {
       return {
@@ -181,7 +181,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -191,19 +191,19 @@ export class PipelineRunner {
    */
   private async runTypeCheck(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       // Get all TypeScript files
       const files = await this.executionEngine.listFiles(worktreeId, 'src');
-      const tsFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
-      
+      const tsFiles = files.filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'));
+
       let allValid = true;
       const outputs: string[] = [];
-      
+
       for (const file of tsFiles) {
         const content = await this.executionEngine.readFile(worktreeId, file);
         const validation = this.sandbox.validate(content);
-        
+
         if (!validation.valid) {
           allValid = false;
           outputs.push(`${file}: ${validation.errors.length} error(s)`);
@@ -211,9 +211,9 @@ export class PipelineRunner {
           outputs.push(`${file}: ✓ (${validation.warnings.length} warnings)`);
         }
       }
-      
+
       const completedAt = new Date().toISOString();
-      
+
       return {
         name: 'Type Check',
         status: allValid ? 'success' : 'failure',
@@ -221,7 +221,7 @@ export class PipelineRunner {
         completedAt,
         duration: Date.now() - new Date(startedAt).getTime(),
         output: outputs.join('\n'),
-        details: allValid ? undefined : 'Type errors found'
+        details: allValid ? undefined : 'Type errors found',
       };
     } catch (error) {
       return {
@@ -231,7 +231,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -241,17 +241,19 @@ export class PipelineRunner {
    */
   private async runSecurityScan(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       const files = await this.executionEngine.listFiles(worktreeId);
-      const codeFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js'));
-      
+      const codeFiles = files.filter(
+        (f) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js')
+      );
+
       const findings: string[] = [];
       let hasCritical = false;
-      
+
       for (const file of codeFiles) {
         const content = await this.executionEngine.readFile(worktreeId, file);
-        
+
         // Simple security checks
         if (/eval\s*\(/.test(content)) {
           findings.push(`🔴 ${file}: Uses eval() - potential code injection`);
@@ -267,10 +269,10 @@ export class PipelineRunner {
           findings.push(`ℹ️ ${file}: Accesses environment variables`);
         }
       }
-      
+
       const completedAt = new Date().toISOString();
       const status = hasCritical ? 'failure' : 'success';
-      
+
       return {
         name: 'Security Scan',
         status,
@@ -278,7 +280,7 @@ export class PipelineRunner {
         completedAt,
         duration: Date.now() - new Date(startedAt).getTime(),
         output: findings.length > 0 ? findings.join('\n') : '✓ No security issues found',
-        details: hasCritical ? 'Critical security issues found' : undefined
+        details: hasCritical ? 'Critical security issues found' : undefined,
       };
     } catch (error) {
       return {
@@ -288,7 +290,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -298,50 +300,50 @@ export class PipelineRunner {
    */
   private async runCodeReview(worktreeId: string): Promise<PipelineStage> {
     const startedAt = new Date().toISOString();
-    
+
     try {
       const files = await this.executionEngine.listFiles(worktreeId);
-      const codeFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
-      
+      const codeFiles = files.filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'));
+
       const findings: ReviewFinding[] = [];
-      
+
       for (const file of codeFiles) {
         const content = await this.executionEngine.readFile(worktreeId, file);
         const validation = this.sandbox.validate(content);
-        
+
         // Convert validation warnings to review findings
-        validation.warnings.forEach(w => {
+        validation.warnings.forEach((w) => {
           findings.push({
             severity: w.severity === 'warning' ? 'warning' : 'info',
             file,
             line: w.line,
             message: w.message,
-            resolved: false
+            resolved: false,
           });
         });
-        
+
         // Additional review checks
         if (content.length > 500) {
           findings.push({
             severity: 'suggestion',
             file,
             message: 'Consider breaking this file into smaller modules',
-            resolved: false
+            resolved: false,
           });
         }
       }
-      
+
       const review: Review = {
         id: `review-${Date.now()}`,
         reviewer: 'AI Code Reviewer',
-        state: findings.some(f => f.severity === 'critical') ? 'changes_requested' : 'approved',
+        state: findings.some((f) => f.severity === 'critical') ? 'changes_requested' : 'approved',
         body: this.generateReviewBody(findings),
         submittedAt: new Date().toISOString(),
-        findings
+        findings,
       };
-      
+
       const completedAt = new Date().toISOString();
-      
+
       return {
         name: 'Code Review',
         status: 'success',
@@ -349,7 +351,7 @@ export class PipelineRunner {
         completedAt,
         duration: Date.now() - new Date(startedAt).getTime(),
         output: `Review completed: ${findings.length} finding(s)`,
-        details: JSON.stringify(review)
+        details: JSON.stringify(review),
       };
     } catch (error) {
       return {
@@ -359,7 +361,7 @@ export class PipelineRunner {
         completedAt: new Date().toISOString(),
         duration: 0,
         output: '',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -368,9 +370,11 @@ export class PipelineRunner {
    * Generate review body text
    */
   private generateReviewBody(findings: ReviewFinding[]): string {
-    const critical = findings.filter(f => f.severity === 'critical').length;
-    const warnings = findings.filter(f => f.severity === 'warning').length;
-    const info = findings.filter(f => f.severity === 'info' || f.severity === 'suggestion').length;
+    const critical = findings.filter((f) => f.severity === 'critical').length;
+    const warnings = findings.filter((f) => f.severity === 'warning').length;
+    const info = findings.filter(
+      (f) => f.severity === 'info' || f.severity === 'suggestion'
+    ).length;
 
     let body = `## Code Review Summary\n\n`;
     body += `- **Critical:** ${critical}\n`;
@@ -379,7 +383,7 @@ export class PipelineRunner {
 
     if (findings.length > 0) {
       body += `## Findings\n\n`;
-      findings.forEach(f => {
+      findings.forEach((f) => {
         const icon = f.severity === 'critical' ? '🔴' : f.severity === 'warning' ? '🟡' : 'ℹ️';
         body += `${icon} **${f.file}${f.line ? `:${f.line}` : ''}**: ${f.message}\n`;
       });
@@ -399,7 +403,7 @@ export class PipelineRunner {
       status: stage.status,
       duration: stage.duration,
       output: stage.output,
-      details: stage.details
+      details: stage.details,
     };
   }
 
@@ -412,14 +416,14 @@ export class PipelineRunner {
     reviews: Review[],
     startTime: number
   ): PipelineResult {
-    const success = stages.every(s => s.status === 'success');
-    
+    const success = stages.every((s) => s.status === 'success');
+
     return {
       stages,
       checks,
       reviews,
       success,
-      totalDuration: Date.now() - startTime
+      totalDuration: Date.now() - startTime,
     };
   }
 }

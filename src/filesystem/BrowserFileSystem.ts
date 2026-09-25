@@ -11,6 +11,14 @@ export interface BrowserFileHandle {
   handle?: FileSystemHandle;
 }
 
+interface DirectoryPickerWindow extends Window {
+  showDirectoryPicker(options: { mode: 'readwrite' }): Promise<FileSystemDirectoryHandle>;
+}
+
+interface IterableDirectoryHandle extends FileSystemDirectoryHandle {
+  values(): AsyncIterableIterator<FileSystemHandle>;
+}
+
 export class BrowserFileSystem {
   private directoryHandle: FileSystemDirectoryHandle | null = null;
 
@@ -30,9 +38,11 @@ export class BrowserFileSystem {
     }
 
     try {
-      this.directoryHandle = await (window as any).showDirectoryPicker({
-        mode: 'readwrite'
-      });
+      this.directoryHandle = await (window as unknown as DirectoryPickerWindow).showDirectoryPicker(
+        {
+          mode: 'readwrite',
+        }
+      );
       return true;
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
@@ -55,7 +65,7 @@ export class BrowserFileSystem {
 
     // Navigate to path
     if (path) {
-      const parts = path.split('/').filter(p => p);
+      const parts = path.split('/').filter((p) => p);
       for (const part of parts) {
         try {
           currentHandle = await currentHandle.getDirectoryHandle(part);
@@ -66,12 +76,11 @@ export class BrowserFileSystem {
     }
 
     // List files
-    // @ts-ignore - entries() is available in modern browsers
-    for await (const entry of (currentHandle as any).values()) {
+    for await (const entry of (currentHandle as IterableDirectoryHandle).values()) {
       files.push({
         name: entry.name,
         kind: entry.kind,
-        handle: entry
+        handle: entry,
       });
     }
 
@@ -86,8 +95,9 @@ export class BrowserFileSystem {
       throw new Error('No directory selected');
     }
 
-    const parts = path.split('/').filter(p => p);
-    const fileName = parts.pop()!;
+    const parts = path.split('/').filter((p) => p);
+    const fileName = parts.pop();
+    if (!fileName) throw new Error('File path must not be empty');
 
     // Navigate to directory
     let currentHandle = this.directoryHandle;
@@ -109,8 +119,9 @@ export class BrowserFileSystem {
       throw new Error('No directory selected');
     }
 
-    const parts = path.split('/').filter(p => p);
-    const fileName = parts.pop()!;
+    const parts = path.split('/').filter((p) => p);
+    const fileName = parts.pop();
+    if (!fileName) throw new Error('File path must not be empty');
 
     // Navigate to directory (create if needed)
     let currentHandle = this.directoryHandle;
@@ -133,8 +144,9 @@ export class BrowserFileSystem {
       throw new Error('No directory selected');
     }
 
-    const parts = path.split('/').filter(p => p);
-    const fileName = parts.pop()!;
+    const parts = path.split('/').filter((p) => p);
+    const fileName = parts.pop();
+    if (!fileName) throw new Error('File path must not be empty');
 
     // Navigate to directory
     let currentHandle = this.directoryHandle;
@@ -155,8 +167,9 @@ export class BrowserFileSystem {
     }
 
     try {
-      const parts = path.split('/').filter(p => p);
-      const fileName = parts.pop()!;
+      const parts = path.split('/').filter((p) => p);
+      const fileName = parts.pop();
+      if (!fileName) throw new Error('File path must not be empty');
 
       let currentHandle = this.directoryHandle;
       for (const part of parts) {

@@ -2,8 +2,6 @@
 // BACKEND API - Simulated Backend with IndexedDB
 // ============================================================
 
-import { User } from '../auth/types';
-
 export interface BackendConfig {
   dbName: string;
   version: number;
@@ -104,9 +102,10 @@ export class BackendAPI {
    */
   async create<T>(storeName: string, data: T): Promise<APIResponse<T>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readwrite');
+      const transaction = db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.add(data);
 
@@ -114,7 +113,7 @@ export class BackendAPI {
         resolve({
           success: true,
           data,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -122,7 +121,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: request.error?.message || 'Failed to create record',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
@@ -130,9 +129,10 @@ export class BackendAPI {
 
   async read<T>(storeName: string, id: string): Promise<APIResponse<T>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readonly');
+      const transaction = db.transaction(storeName, 'readonly');
       const store = transaction.objectStore(storeName);
       const request = store.get(id);
 
@@ -140,7 +140,7 @@ export class BackendAPI {
         resolve({
           success: true,
           data: request.result,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -148,7 +148,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: request.error?.message || 'Failed to read record',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
@@ -156,21 +156,22 @@ export class BackendAPI {
 
   async update<T>(storeName: string, id: string, data: Partial<T>): Promise<APIResponse<T>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readwrite');
+      const transaction = db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
-      
+
       // First get existing record
       const getRequest = store.get(id);
-      
+
       getRequest.onsuccess = () => {
         const existing = getRequest.result;
         if (!existing) {
           resolve({
             success: false,
             error: 'Record not found',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
           return;
         }
@@ -182,7 +183,7 @@ export class BackendAPI {
           resolve({
             success: true,
             data: updated,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         };
 
@@ -190,7 +191,7 @@ export class BackendAPI {
           resolve({
             success: false,
             error: updateRequest.error?.message || 'Failed to update record',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         };
       };
@@ -199,7 +200,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: getRequest.error?.message || 'Failed to read record',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
@@ -207,16 +208,17 @@ export class BackendAPI {
 
   async delete(storeName: string, id: string): Promise<APIResponse<void>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readwrite');
+      const transaction = db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.delete(id);
 
       request.onsuccess = () => {
         resolve({
           success: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -224,7 +226,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: request.error?.message || 'Failed to delete record',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
@@ -232,9 +234,10 @@ export class BackendAPI {
 
   async list<T>(storeName: string, options?: QueryOptions): Promise<APIResponse<T[]>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readonly');
+      const transaction = db.transaction(storeName, 'readonly');
       const store = transaction.objectStore(storeName);
       const request = store.getAll();
 
@@ -243,9 +246,10 @@ export class BackendAPI {
 
         // Apply ordering
         if (options?.orderBy) {
-          results.sort((a: any, b: any) => {
-            const aVal = a[options.orderBy!];
-            const bVal = b[options.orderBy!];
+          const orderBy = options.orderBy;
+          results.sort((a, b) => {
+            const aVal = (a as Record<string, string | number>)[orderBy];
+            const bVal = (b as Record<string, string | number>)[orderBy];
             const direction = options.orderDirection === 'desc' ? -1 : 1;
             return aVal < bVal ? -direction : direction;
           });
@@ -262,7 +266,7 @@ export class BackendAPI {
         resolve({
           success: true,
           data: results,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -270,17 +274,22 @@ export class BackendAPI {
         resolve({
           success: false,
           error: request.error?.message || 'Failed to list records',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
   }
 
-  async query<T>(storeName: string, indexName: string, value: any): Promise<APIResponse<T[]>> {
+  async query<T>(
+    storeName: string,
+    indexName: string,
+    value: IDBValidKey
+  ): Promise<APIResponse<T[]>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readonly');
+      const transaction = db.transaction(storeName, 'readonly');
       const store = transaction.objectStore(storeName);
       const index = store.index(indexName);
       const request = index.getAll(value);
@@ -289,7 +298,7 @@ export class BackendAPI {
         resolve({
           success: true,
           data: request.result,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -297,7 +306,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: request.error?.message || 'Failed to query records',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
     });
@@ -306,17 +315,21 @@ export class BackendAPI {
   /**
    * Batch operations
    */
-  async batch<T>(storeName: string, operations: Array<{ type: 'add' | 'put' | 'delete'; data?: T; id?: string }>): Promise<APIResponse<void>> {
+  async batch<T>(
+    storeName: string,
+    operations: Array<{ type: 'add' | 'put' | 'delete'; data?: T; id?: string }>
+  ): Promise<APIResponse<void>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(storeName, 'readwrite');
+      const transaction = db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
 
       transaction.oncomplete = () => {
         resolve({
           success: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -324,7 +337,7 @@ export class BackendAPI {
         resolve({
           success: false,
           error: transaction.error?.message || 'Batch operation failed',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       };
 
@@ -343,11 +356,12 @@ export class BackendAPI {
   /**
    * Export all data
    */
-  async exportData(): Promise<APIResponse<Record<string, any[]>>> {
+  async exportData(): Promise<APIResponse<Record<string, unknown[]>>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
-    const exportData: Record<string, any[]> = {};
-    const storeNames = Array.from(this.db.objectStoreNames);
+    const exportData: Record<string, unknown[]> = {};
+    const storeNames = Array.from(db.objectStoreNames);
 
     for (const storeName of storeNames) {
       const response = await this.list(storeName);
@@ -359,18 +373,19 @@ export class BackendAPI {
     return {
       success: true,
       data: exportData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   /**
    * Import data
    */
-  async importData(data: Record<string, any[]>): Promise<APIResponse<void>> {
+  async importData(data: Record<string, unknown[]>): Promise<APIResponse<void>> {
     if (!this.db) throw new Error('Database not initialized');
+    const db = this.db;
 
     for (const [storeName, records] of Object.entries(data)) {
-      if (this.db.objectStoreNames.contains(storeName)) {
+      if (db.objectStoreNames.contains(storeName)) {
         for (const record of records) {
           await this.create(storeName, record);
         }
@@ -379,7 +394,7 @@ export class BackendAPI {
 
     return {
       success: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }
@@ -387,5 +402,5 @@ export class BackendAPI {
 // Singleton instance
 export const backendAPI = new BackendAPI({
   dbName: 'ai-engineering-team',
-  version: 1
+  version: 1,
 });
