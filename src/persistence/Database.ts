@@ -121,32 +121,77 @@ export interface SettingsRecord {
   updatedAt: string;
 }
 
-const DB_NAME = 'ai-engineering-team';
-// Version 2 upgrades existing installations created before the settings store
-// was introduced. Keep the migration additive so existing local data survives.
-const DB_VERSION = 2;
+export const DB_NAME = 'ai-engineering-team';
+// Unified, additive schema for BackendAPI and persistence (legacy v1/v2 installations).
+export const DB_VERSION = 3;
+export const DATABASE_OPEN_TIMEOUT_MS = 8000;
 
 export class Database {
   private db: IDBDatabase | null = null;
+  private opening: Promise<IDBDatabase> | null = null;
+
+  constructor(private readonly name: string = DB_NAME) {}
 
   async open(): Promise<IDBDatabase> {
     if (this.db) return this.db;
-
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-      request.onerror = () => reject(request.error);
+    if (this.opening) return this.opening;
+    const request = indexedDB.open(this.name, DB_VERSION);
+    this.opening = new Promise((resolve, reject) => {
+      let failed = false;
+      const fail = (error: Error) => {
+        failed = true;
+        clearTimeout(timer);
+        reject(error);
+      };
+      const timer = setTimeout(
+        () =>
+          fail(
+            new Error(
+              'O armazenamento local não respondeu. Feche outras janelas desta aplicação e tente novamente.'
+            )
+          ),
+        DATABASE_OPEN_TIMEOUT_MS
+      );
+      request.onerror = () => {
+        this.opening = null;
+        fail(
+          new Error(
+            'Não foi possível abrir o armazenamento local. Feche outras janelas desta aplicação e tente novamente.'
+          )
+        );
+      };
+      // Keep a blocked request cached until it terminates; retries must not queue
+      // more requests behind the same blocked migration and wait indefinitely.
       request.onblocked = () =>
-        reject(
-          new Error('Feche as outras janelas da aplicação para atualizar o armazenamento local.')
+        fail(
+          new Error(
+            'Feche as outras janelas da aplicação para atualizar o armazenamento local. Depois tente novamente.'
+          )
         );
       request.onsuccess = () => {
-        this.db = request.result;
-        this.db.onversionchange = () => this.close();
-        resolve(this.db);
+        clearTimeout(timer);
+        this.opening = null;
+        const connection = request.result;
+        if (failed) {
+          connection.close();
+          return;
+        }
+        this.db = connection;
+        connection.onversionchange = () => {
+          connection.close();
+          if (this.db === connection) this.db = null;
+        };
+        connection.onclose = () => {
+          if (this.db === connection) this.db = null;
+        };
+        resolve(connection);
       };
 
       request.onupgradeneeded = (event) => {
+        if (failed) {
+          request.transaction?.abort();
+          return;
+        }
         const db = (event.target as IDBOpenDBRequest).result;
 
         // Projects store
@@ -196,8 +241,30 @@ export class Database {
         if (!db.objectStoreNames.contains('settings')) {
           db.createObjectStore('settings', { keyPath: 'key' });
         }
+
+        // BackendAPI used a separate v1 schema. Preserve its data and merge the
+        // stores/indexes regardless of which module originally created this database.
+        const legacyIndexes: Record<string, string[]> = {
+          projects: ['userId', 'status', 'createdAt'],
+          pullRequests: ['projectId', 'status', 'createdAt', 'number'],
+          agentRuns: ['projectId', 'agentRole', 'status', 'createdAt'],
+          workRequests: ['projectId', 'status', 'createdAt'],
+          analytics: ['type', 'timestamp'],
+        };
+        const migration = request.transaction;
+        if (!migration) throw new Error('Missing schema migration transaction');
+        for (const [name, indexes] of Object.entries(legacyIndexes)) {
+          const store = db.objectStoreNames.contains(name)
+            ? migration.objectStore(name)
+            : db.createObjectStore(name, { keyPath: 'id' });
+          for (const index of indexes) {
+            if (!store.indexNames.contains(index))
+              store.createIndex(index, index, { unique: false });
+          }
+        }
       };
     });
+    return this.opening;
   }
 
   async close(): Promise<void> {
