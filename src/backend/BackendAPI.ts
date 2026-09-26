@@ -2,6 +2,8 @@
 // BACKEND API - Simulated Backend with IndexedDB
 // ============================================================
 
+import { Database, database, DB_NAME, DB_VERSION } from '../persistence/Database';
+
 export interface BackendConfig {
   dbName: string;
   version: number;
@@ -22,87 +24,32 @@ export interface QueryOptions {
 }
 
 export class BackendAPI {
-  private db: IDBDatabase | null = null;
-  private config: BackendConfig;
+  private connection: Database;
 
   constructor(config: BackendConfig) {
-    this.config = config;
+    // The shared Database owns the schema version, never an individual consumer.
+    this.connection = config.dbName === DB_NAME ? database : new Database(config.dbName);
   }
 
   /**
    * Initialize database connection
    */
   async initialize(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.config.dbName, this.config.version);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        this.db = request.result;
-        resolve();
-      };
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        // Projects store
-        if (!db.objectStoreNames.contains('projects')) {
-          const projectStore = db.createObjectStore('projects', { keyPath: 'id' });
-          projectStore.createIndex('userId', 'userId', { unique: false });
-          projectStore.createIndex('status', 'status', { unique: false });
-          projectStore.createIndex('createdAt', 'createdAt', { unique: false });
-        }
-
-        // Work requests store
-        if (!db.objectStoreNames.contains('workRequests')) {
-          const wrStore = db.createObjectStore('workRequests', { keyPath: 'id' });
-          wrStore.createIndex('projectId', 'projectId', { unique: false });
-          wrStore.createIndex('status', 'status', { unique: false });
-          wrStore.createIndex('createdAt', 'createdAt', { unique: false });
-        }
-
-        // Agent runs store
-        if (!db.objectStoreNames.contains('agentRuns')) {
-          const arStore = db.createObjectStore('agentRuns', { keyPath: 'id' });
-          arStore.createIndex('projectId', 'projectId', { unique: false });
-          arStore.createIndex('status', 'status', { unique: false });
-          arStore.createIndex('createdAt', 'createdAt', { unique: false });
-        }
-
-        // Pull requests store
-        if (!db.objectStoreNames.contains('pullRequests')) {
-          const prStore = db.createObjectStore('pullRequests', { keyPath: 'id' });
-          prStore.createIndex('projectId', 'projectId', { unique: false });
-          prStore.createIndex('status', 'status', { unique: false });
-          prStore.createIndex('createdAt', 'createdAt', { unique: false });
-        }
-
-        // Analytics store
-        if (!db.objectStoreNames.contains('analytics')) {
-          const analyticsStore = db.createObjectStore('analytics', { keyPath: 'id' });
-          analyticsStore.createIndex('type', 'type', { unique: false });
-          analyticsStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-      };
-    });
+    await this.connection.open();
   }
 
   /**
    * Close database connection
    */
   close(): void {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
-    }
+    void this.connection.close();
   }
 
   /**
    * Generic CRUD operations
    */
   async create<T>(storeName: string, data: T): Promise<APIResponse<T>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readwrite');
@@ -128,8 +75,7 @@ export class BackendAPI {
   }
 
   async read<T>(storeName: string, id: string): Promise<APIResponse<T>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readonly');
@@ -155,8 +101,7 @@ export class BackendAPI {
   }
 
   async update<T>(storeName: string, id: string, data: Partial<T>): Promise<APIResponse<T>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readwrite');
@@ -207,8 +152,7 @@ export class BackendAPI {
   }
 
   async delete(storeName: string, id: string): Promise<APIResponse<void>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readwrite');
@@ -233,8 +177,7 @@ export class BackendAPI {
   }
 
   async list<T>(storeName: string, options?: QueryOptions): Promise<APIResponse<T[]>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readonly');
@@ -285,8 +228,7 @@ export class BackendAPI {
     indexName: string,
     value: IDBValidKey
   ): Promise<APIResponse<T[]>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readonly');
@@ -319,8 +261,7 @@ export class BackendAPI {
     storeName: string,
     operations: Array<{ type: 'add' | 'put' | 'delete'; data?: T; id?: string }>
   ): Promise<APIResponse<void>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     return new Promise((resolve) => {
       const transaction = db.transaction(storeName, 'readwrite');
@@ -357,8 +298,7 @@ export class BackendAPI {
    * Export all data
    */
   async exportData(): Promise<APIResponse<Record<string, unknown[]>>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     const exportData: Record<string, unknown[]> = {};
     const storeNames = Array.from(db.objectStoreNames);
@@ -381,8 +321,7 @@ export class BackendAPI {
    * Import data
    */
   async importData(data: Record<string, unknown[]>): Promise<APIResponse<void>> {
-    if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
+    const db = await this.connection.open();
 
     for (const [storeName, records] of Object.entries(data)) {
       if (db.objectStoreNames.contains(storeName)) {
@@ -401,6 +340,6 @@ export class BackendAPI {
 
 // Singleton instance
 export const backendAPI = new BackendAPI({
-  dbName: 'ai-engineering-team',
-  version: 1,
+  dbName: DB_NAME,
+  version: DB_VERSION,
 });
