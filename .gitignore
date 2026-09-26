@@ -9,3 +9,29 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Local credentials and private keys.
+.envrc
+.netrc
+.npmrc
+.pypirc
+.aws/
+.azure/
+.gcloud/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_ed25519
+id_ecdsa
+
+# Service-account exports and generated secret configuration.
+secrets/
+.secrets/
+credentials.json
+credentials-*.json
+service-account*.json
+firebase-adminsdk-*.json

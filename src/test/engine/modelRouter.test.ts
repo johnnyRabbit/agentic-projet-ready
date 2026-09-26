@@ -37,7 +37,7 @@ describe('ModelRouter', () => {
     };
 
     const response = await router.execute(request);
-    
+
     expect(response).toBeDefined();
     expect(response.content).toBeDefined();
     expect(response.provider).toBe('groq');
@@ -56,7 +56,7 @@ describe('ModelRouter', () => {
 
     await router.execute(request);
     const history = router.getPerformanceHistory();
-    
+
     expect(history.length).toBeGreaterThan(0);
   });
 });
@@ -78,6 +78,10 @@ describe('GroqProvider', () => {
     expect(models[0]).toHaveProperty('id');
     expect(models[0]).toHaveProperty('name');
     expect(models[0]).toHaveProperty('inputCostPer1k');
+    expect(models.map((model) => model.id)).toEqual(
+      expect.arrayContaining(['openai/gpt-oss-20b', 'openai/gpt-oss-120b'])
+    );
+    expect(models.some((model) => model.id.includes('llama-3.3-70b'))).toBe(false);
   });
 
   it('should set API key', () => {
@@ -96,7 +100,7 @@ describe('GroqProvider', () => {
     };
 
     const response = await provider.execute(request);
-    
+
     expect(response).toBeDefined();
     expect(response.content).toBeDefined();
     expect(response.provider).toBe('groq');
@@ -116,7 +120,7 @@ describe('GroqProvider', () => {
     };
 
     const response = await provider.execute(request);
-    
+
     expect(response.inputTokens).toBeGreaterThan(0);
     expect(response.outputTokens).toBeGreaterThan(0);
     expect(response.cost).toBeGreaterThan(0);
