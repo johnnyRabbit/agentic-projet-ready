@@ -22,6 +22,7 @@ import {
 export function EngineDashboard() {
   const {
     isInitialized,
+    initializationError,
     isGroqConnected,
     groqApiKey,
     isExecuting,
@@ -108,6 +109,16 @@ export function EngineDashboard() {
           </button>
         </div>
       </div>
+
+      {initializationError && (
+        <p
+          role="alert"
+          className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
+          {initializationError} Feche outras janelas da aplicação e atualize a página para tentar
+          recuperar os dados.
+        </p>
+      )}
 
       {/* Groq API Key */}
       <div className="glass-card rounded-xl p-4 mb-6">
