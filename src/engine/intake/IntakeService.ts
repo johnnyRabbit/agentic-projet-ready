@@ -327,7 +327,15 @@ export class IntakeService {
       record.revision
     );
   }
-  async analyze(record: IntakeRecord, provider: ModelProvider): Promise<IntakeRecord> {
+  async analyze(
+    record: IntakeRecord,
+    provider: ModelProvider,
+    options: {
+      signal?: AbortSignal;
+      onStarted?: (record: IntakeRecord) => void;
+      onDelta?: (delta: string, accumulated: string) => void;
+    } = {}
+  ): Promise<IntakeRecord> {
     if (record.status === 'analyzing') throw new Error('Já existe uma análise em curso.');
     const attempt = {
       id: crypto.randomUUID(),
@@ -349,7 +357,11 @@ export class IntakeService {
     let failureMessage =
       'A chamada de IA falhou. Verifique a chave Groq e a ligação e tente novamente.';
     try {
+      options.onStarted?.(started);
+      options.signal?.throwIfAborted();
       const response = await provider.execute({
+        signal: options.signal,
+        onDelta: options.onDelta,
         executionMode: 'real',
         taskType: 'planning',
         complexity: 'medium',
@@ -370,6 +382,7 @@ export class IntakeService {
           },
         ],
       });
+      options.signal?.throwIfAborted();
       evidence = {
         model: response.model,
         inputTokens: response.inputTokens,
@@ -406,7 +419,9 @@ export class IntakeService {
           ...started,
           revision: started.revision + 1,
           status: 'failed',
-          error: failureMessage,
+          error: options.signal?.aborted
+            ? 'Análise cancelada. O pedido ficou guardado e pode tentar novamente.'
+            : failureMessage,
           attempts: [...record.attempts, { ...attempt, ...evidence, outcome: 'failed' }],
         },
         started.revision

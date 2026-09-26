@@ -241,4 +241,80 @@ describe('Groq strict real mode', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('secret')));
     await expect(new GroqProvider('test-only').execute(request)).rejects.toThrow('ligação');
   });
+  it('streams deltas, usage and finish reason from fragmented SSE events', async () => {
+    const events = [
+      {
+        model: 'openai/gpt-oss-120b',
+        choices: [{ delta: { content: 'Olá ' }, finish_reason: null }],
+        usage: null,
+      },
+      {
+        model: 'openai/gpt-oss-120b',
+        choices: [{ delta: { content: 'mundo' }, finish_reason: null }],
+        usage: null,
+      },
+      {
+        model: 'openai/gpt-oss-120b',
+        choices: [{ delta: {}, finish_reason: 'stop' }],
+        usage: null,
+      },
+      {
+        model: 'openai/gpt-oss-120b',
+        choices: [],
+        usage: {
+          prompt_tokens: 11,
+          completion_tokens: 2,
+          prompt_tokens_details: { cached_tokens: 3 },
+        },
+      },
+    ];
+    const payload =
+      events.map((event) => `data: ${JSON.stringify(event)}\r\n\r\n`).join('') +
+      'data: [DONE]\r\n\r\n';
+    const bytes = new TextEncoder().encode(payload);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let index = 0; index < bytes.length; index += 5)
+          controller.enqueue(bytes.slice(index, index + 5));
+        controller.close();
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const onDelta = vi.fn();
+
+    const result = await new GroqProvider('test-only').execute({ ...request, onDelta });
+
+    expect(result).toMatchObject({
+      content: 'Olá mundo',
+      model: 'openai/gpt-oss-120b',
+      inputTokens: 11,
+      outputTokens: 2,
+      cachedTokens: 3,
+      finishReason: 'stop',
+    });
+    expect(onDelta).toHaveBeenNthCalledWith(1, 'Olá ', 'Olá ');
+    expect(onDelta).toHaveBeenNthCalledWith(2, 'mundo', 'Olá mundo');
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      stream: true,
+      stream_options: { include_usage: true },
+    });
+  });
+  it('rejects a stream that closes without the final marker', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('data: {"choices":[{"delta":{"content":"partial"}}]}\n\n', {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    );
+    await expect(new GroqProvider('test-only').execute(request)).rejects.toThrow('ligação');
+  });
 });

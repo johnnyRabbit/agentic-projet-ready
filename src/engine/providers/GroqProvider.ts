@@ -26,6 +26,20 @@ const GROQ_MODELS: ModelInfo[] = [
   },
 ];
 
+interface GroqStreamChunk {
+  model?: string;
+  choices?: Array<{
+    delta?: { content?: string | null };
+    finish_reason?: string | null;
+  }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    cached_tokens?: number;
+    prompt_tokens_details?: { cached_tokens?: number };
+  } | null;
+}
+
 export class GroqProvider implements ModelProvider {
   name = 'groq';
   private apiKey: string;
@@ -72,7 +86,9 @@ export class GroqProvider implements ModelProvider {
       logger.debug(`[GroqProvider] Executing request with model: ${model.id}`);
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        signal: AbortSignal.timeout(60000),
+        signal: request.signal
+          ? AbortSignal.any([request.signal, AbortSignal.timeout(60000)])
+          : AbortSignal.timeout(60000),
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -83,7 +99,8 @@ export class GroqProvider implements ModelProvider {
           messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
           max_tokens: request.maxTokens || 4096,
           temperature: request.temperature ?? 0.3,
-          stream: false,
+          stream: true,
+          stream_options: { include_usage: true },
         }),
       });
 
@@ -104,7 +121,7 @@ export class GroqProvider implements ModelProvider {
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data = await this.readStream(response, request.onDelta);
       const latency = Date.now() - startTime;
 
       const inputTokens = data.usage?.prompt_tokens || 0;
@@ -114,16 +131,17 @@ export class GroqProvider implements ModelProvider {
       logger.debug(`[GroqProvider] Request completed in ${latency}ms, cost: $${cost.toFixed(6)}`);
 
       return {
-        content: data.choices[0]?.message?.content || '',
+        content: data.content,
         provider: this.name,
-        model: model.id,
+        model: data.model || model.id,
         inputTokens,
         outputTokens,
-        cachedTokens: data.usage?.cached_tokens || 0,
+        cachedTokens:
+          data.usage?.cached_tokens || data.usage?.prompt_tokens_details?.cached_tokens || 0,
         latency,
         cost,
         timestamp: new Date().toISOString(),
-        finishReason: data.choices[0]?.finish_reason || 'stop',
+        finishReason: data.finishReason || 'stop',
       };
     } catch (error) {
       if (request.executionMode === 'real') {
@@ -137,6 +155,69 @@ export class GroqProvider implements ModelProvider {
       console.warn('[GroqProvider] API call failed, using simulation:', error);
       return this.simulateResponse(request, model, startTime);
     }
+  }
+
+  private async readStream(
+    response: Response,
+    onDelta?: ModelRequest['onDelta']
+  ): Promise<{
+    content: string;
+    model?: string;
+    finishReason?: string;
+    usage?: NonNullable<GroqStreamChunk['usage']>;
+  }> {
+    if (!response.body) throw new Error('A resposta Groq não contém um stream.');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let content = '';
+    let model: string | undefined;
+    let finishReason: string | undefined;
+    let usage: NonNullable<GroqStreamChunk['usage']> | undefined;
+    let completed = false;
+
+    const processEvent = (event: string) => {
+      const data = event
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trimStart())
+        .join('\n');
+      if (!data) return;
+      if (data.trim() === '[DONE]') {
+        completed = true;
+        return;
+      }
+
+      const chunk = JSON.parse(data) as GroqStreamChunk;
+      model = chunk.model || model;
+      usage = chunk.usage || usage;
+      const choice = chunk.choices?.[0];
+      finishReason = choice?.finish_reason || finishReason;
+      const delta = choice?.delta?.content;
+      if (delta) {
+        content += delta;
+        try {
+          onDelta?.(delta, content);
+        } catch (error) {
+          logger.warn('[GroqProvider] Stream progress callback failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() || '';
+      events.forEach(processEvent);
+      if (done) break;
+    }
+    if (buffer.trim()) processEvent(buffer);
+    if (!completed) throw new Error('O stream Groq terminou antes da mensagem final.');
+    return { content, model, finishReason, usage };
   }
 
   private selectModel(request: ModelRequest): ModelInfo {

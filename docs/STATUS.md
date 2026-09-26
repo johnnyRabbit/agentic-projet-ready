@@ -42,6 +42,17 @@ Data desta revisão: 2026-09-25. Base: leitura dos 14 documentos de `docs/`, ins
 - `npm run typecheck`, `npm run lint` (sem avisos) e `npm run build`: passaram. O build mantém aviso de bundle superior a 500 kB.
 - Chamada autenticada ao fornecedor e validação visual num navegador real continuam por verificar. Ver [VALIDATION_M1.md](VALIDATION_M1.md) para o percurso e limites.
 
+## Atualização — 2026-09-26
+
+Esta atualização substitui os limites históricos de validação do fornecedor e browser indicados acima para o cenário M1 testado.
+
+- Corrigido conflito entre `BackendAPI` (v1) e persistência (v2) que bloqueava a gravação. Ambos utilizam agora `Database` e uma migração aditiva v3, preservando stores, índices e dados antigos.
+- Validado no browser: entrada de teste, duas análises reais Groq, esclarecimento, edição, aprovação v3 e recuperação após recarregar. A chave foi usada no campo de sessão e desapareceu do campo após recarregar.
+- `npm test -- --run`: 122 testes passaram em 12 suites. Tipos, lint e build passaram; permanece o aviso de bundle acima de 500 kB.
+- Reformulada a experiência de pedidos: lista separada, etapas Descrever / Esclarecer / Rever e aprovar, respostas junto de cada pergunta, proposta legível com edição opcional, configuração Groq em diálogo e histórico recolhido. A análise guarda primeiro a ideia e permite cancelar a chamada sem perder o pedido.
+- Validação atual: 127 testes em 12 suites, tipos, lint e build passaram. Verificação visual no browser da lista, proposta aprovada existente, novo pedido e abertura/fecho da configuração preservando o texto. Não foi repetida uma chamada autenticada nesta alteração. Ver [validação M1](VALIDATION_M1.md).
+- A integração Groq usa agora streaming SSE (`stream: true`) e acumula os deltas até formar a proposta completa. A interface mostra que a resposta está a chegar; o último evento fornece utilização para manter tokens e custo. Streams incompletos falham explicitamente e o cancelamento continua disponível.
+
 ## Como interpretar os documentos antigos
 
 - Fases 2 e 3 reconhecem explicitamente simulações e preveem a sua substituição.

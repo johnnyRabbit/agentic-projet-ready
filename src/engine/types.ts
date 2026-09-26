@@ -31,6 +31,9 @@ export type ModelCapability =
   'fast' | 'reasoning' | 'code-generation' | 'code-review' | 'planning' | 'creative';
 
 export interface ModelRequest {
+  signal?: AbortSignal;
+  /** Receives each streamed text delta and the content accumulated so far. */
+  onDelta?: (delta: string, accumulated: string) => void;
   /** Real requests must never fall back to demonstration data. */
   executionMode?: 'real' | 'demo';
   taskType: ModelCapability;
