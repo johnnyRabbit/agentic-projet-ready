@@ -148,33 +148,33 @@ export class ModelRouter {
 
     // High risk → always use strongest model
     if (risk === 'high') {
-      selectedModel = 'llama-3.3-70b-versatile';
+      selectedModel = 'openai/gpt-oss-120b';
       reason = 'High risk task — using strongest available model';
-      escalationPath.push('llama-3.3-70b-versatile');
+      escalationPath.push('openai/gpt-oss-120b');
     }
     // Budget minimal → use cheapest fast model
     else if (budget === 'minimal') {
-      selectedModel = 'llama-3.1-8b-instant';
+      selectedModel = 'openai/gpt-oss-20b';
       reason = 'Minimal budget — using fast/cheap model';
-      escalationPath.push('mixtral-8x7b-32768', 'llama-3.3-70b-versatile');
+      escalationPath.push('openai/gpt-oss-120b');
     }
     // Code generation → use code-capable model
     else if (taskType === 'code-generation') {
-      selectedModel = 'llama-3.3-70b-versatile';
+      selectedModel = 'openai/gpt-oss-120b';
       reason = 'Code generation requires strong reasoning model';
-      escalationPath.push('llama-3.3-70b-versatile');
+      escalationPath.push('openai/gpt-oss-120b');
     }
     // Fast tasks → use instant model
     else if (taskType === 'fast' || complexity === 'low') {
-      selectedModel = 'llama-3.1-8b-instant';
+      selectedModel = 'openai/gpt-oss-20b';
       reason = 'Low complexity task — fast model sufficient';
-      escalationPath.push('mixtral-8x7b-32768', 'llama-3.3-70b-versatile');
+      escalationPath.push('openai/gpt-oss-120b');
     }
     // Default: balanced approach
     else {
-      selectedModel = 'llama-3.3-70b-versatile';
+      selectedModel = 'openai/gpt-oss-120b';
       reason = 'Default: versatile model for balanced performance';
-      escalationPath.push('llama-3.3-70b-versatile');
+      escalationPath.push('openai/gpt-oss-120b');
     }
 
     // Build alternatives

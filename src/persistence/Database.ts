@@ -122,7 +122,9 @@ export interface SettingsRecord {
 }
 
 const DB_NAME = 'ai-engineering-team';
-const DB_VERSION = 1;
+// Version 2 upgrades existing installations created before the settings store
+// was introduced. Keep the migration additive so existing local data survives.
+const DB_VERSION = 2;
 
 export class Database {
   private db: IDBDatabase | null = null;
@@ -134,8 +136,13 @@ export class Database {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => reject(request.error);
+      request.onblocked = () =>
+        reject(
+          new Error('Feche as outras janelas da aplicação para atualizar o armazenamento local.')
+        );
       request.onsuccess = () => {
         this.db = request.result;
+        this.db.onversionchange = () => this.close();
         resolve(this.db);
       };
 
@@ -300,8 +307,13 @@ export class Database {
   async exportAll(): Promise<string> {
     const data: Record<string, unknown[]> = {};
     const storeNames: (keyof DBSchema)[] = [
-      'projects', 'worktrees', 'pullRequests', 
-      'agentRuns', 'decisions', 'events', 'settings'
+      'projects',
+      'worktrees',
+      'pullRequests',
+      'agentRuns',
+      'decisions',
+      'events',
+      'settings',
     ];
 
     for (const storeName of storeNames) {
@@ -314,8 +326,13 @@ export class Database {
   async importAll(json: string): Promise<void> {
     const data = JSON.parse(json);
     const storeNames: (keyof DBSchema)[] = [
-      'projects', 'worktrees', 'pullRequests', 
-      'agentRuns', 'decisions', 'events', 'settings'
+      'projects',
+      'worktrees',
+      'pullRequests',
+      'agentRuns',
+      'decisions',
+      'events',
+      'settings',
     ];
 
     for (const storeName of storeNames) {
@@ -345,7 +362,7 @@ export class Database {
       this.count('pullRequests'),
       this.count('agentRuns'),
       this.count('decisions'),
-      this.count('events')
+      this.count('events'),
     ]);
 
     // Estimate size
@@ -359,7 +376,7 @@ export class Database {
       agentRuns,
       decisions,
       events,
-      totalSize
+      totalSize,
     };
   }
 }
