@@ -34,6 +34,8 @@ interface EngineState {
 
   // State
   isInitialized: boolean;
+  isInitializing: boolean;
+  initializationError: string | null;
   groqApiKey: string;
   isGroqConnected: boolean;
 
@@ -81,6 +83,8 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   // State
   isInitialized: false,
+  isInitializing: false,
+  initializationError: null,
   groqApiKey: '',
   isGroqConnected: false,
 
@@ -100,10 +104,25 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   // Actions
   initialize: async () => {
+    if (get().isInitialized || get().isInitializing) return;
+    set({ isInitializing: true, initializationError: null });
     const { modelRouter, budgetEngine, contextEngine, agentRegistry, groqProvider } = get();
 
-    // Load persisted state first
-    await get().loadState();
+    // The dashboard is usable without persisted history. Do not leave it blocked
+    // indefinitely if IndexedDB is waiting for another tab's database connection.
+    try {
+      await Promise.race([
+        get().loadState(),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error('timeout')), 5000);
+        }),
+      ]);
+    } catch {
+      set({
+        initializationError:
+          'O histórico local demorou demasiado a carregar. O motor abriu sem esse histórico.',
+      });
+    }
 
     // Register provider
     modelRouter.registerProvider(groqProvider);
@@ -135,7 +154,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       tokens: 60,
     });
 
-    set({ harness, isInitialized: true });
+    set({ harness, isInitialized: true, isInitializing: false });
   },
 
   setGroqApiKey: (key: string) => {
